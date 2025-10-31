@@ -15,7 +15,7 @@ type Config struct {
 
 type HTTPServer struct {
 	Port        string        `env:"PORT" envDefault:"8080"`
-	IdleTimeout time.Duration `env:"IDLE_TIMEOUT" envDefault:"30s""`
+	IdleTimeout time.Duration `env:"IDLE_TIMEOUT" envDefault:"30s"`
 }
 
 func MustLoad() Config {
