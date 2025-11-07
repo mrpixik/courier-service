@@ -9,13 +9,25 @@ import (
 )
 
 type Config struct {
-	Env string `env:"ENVIRONMENT" envDefault:"prod"`
+	Env string `env:"ENVIRONMENT" envDefault:"prod"` //local, dev, prod -- пока применяется только для настройки логгера
+	PostgresStorage
 	HTTPServer
 }
 
 type HTTPServer struct {
-	Port        string        `env:"PORT" envDefault:"8080"`
+	ServerPort  string        `env:"PORT" envDefault:"8080"`
 	IdleTimeout time.Duration `env:"IDLE_TIMEOUT" envDefault:"30s"`
+}
+
+type PostgresStorage struct {
+	User            string        `env:"POSTGRES_USER,required"`
+	Password        string        `env:"POSTGRES_PASSWORD,required"`
+	Host            string        `env:"POSTGRES_HOST,required"`
+	DbPort          string        `env:"POSTGRES_PORT,required"`
+	DbName          string        `env:"POSTGRES_DB_NAME,required"`
+	MaxConns        int32         `env:"POSTGRES_MAX_CONNS,required"`
+	MinConns        int32         `env:"POSTGRES_MIN_CONNS,required"`
+	MaxConnLifeTime time.Duration `env:"POSTGRES_MAX_CONN_LIFE_TIME,required"`
 }
 
 func MustLoad() Config {
@@ -31,7 +43,7 @@ func MustLoad() Config {
 	}
 
 	// Значение порта переопределяется только в случае, если в --port передается какое-то значение
-	pflag.StringVar(&config.Port, "port", config.Port, "server's port")
+	pflag.StringVar(&config.ServerPort, "port", config.ServerPort, "server's port")
 
 	pflag.Parse()
 
