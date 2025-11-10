@@ -41,3 +41,8 @@ type CourierUpdateRequest struct {
 type CourierUpdateResponse struct {
 	Message string `json:"message"`
 }
+
+// CourierDeleteResponse запрос на обновление профиля
+type CourierDeleteResponse struct {
+	Message string `json:"message"`
+}

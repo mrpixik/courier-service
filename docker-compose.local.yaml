@@ -35,20 +35,6 @@ services:
     networks:
       - local
 
-  service-courier:
-    image: pixik/courier-service:latest
-    container_name: service-courier
-    env_file:
-      - .env
-    ports:
-      - 8080:${HTTP_PORT}
-    restart: on-failure
-    networks:
-      - local
-    depends_on:
-      - postgres
-      - migrations
-
 networks:
   local:
     driver: bridge

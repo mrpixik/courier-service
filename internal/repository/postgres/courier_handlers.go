@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"service-order-avito/internal/domain"
-	"service-order-avito/internal/repository"
+	"service-order-avito/internal/domain/errors/repository"
 	"strings"
 	"time"
 )
@@ -115,7 +115,31 @@ func (s *courierRepositoryPostgres) Update(ctx context.Context, courier *domain.
 	sql := `UPDATE couriers SET` + " " + strings.Join(sqlParts, ", ") + fmt.Sprintf(` WHERE id = $%d`, fieldIdx)
 	fields = append(fields, courier.Id)
 
-	_, err := s.pool.Exec(ctx, sql, fields...)
+	cmdTag, err := s.pool.Exec(ctx, sql, fields...)
+
+	if err != nil {
+		return err
+	}
+	if cmdTag.RowsAffected() == 0 {
+		return repository.ErrCourierNotFound
+	}
+
+	return err
+}
+
+func (s *courierRepositoryPostgres) DeleteById(ctx context.Context, id int) error {
+	sql := `
+        DELETE FROM couriers
+        WHERE id=$1;
+    `
+
+	cmdTag, err := s.pool.Exec(ctx, sql, id)
+	if err != nil {
+		return err
+	}
+	if cmdTag.RowsAffected() == 0 {
+		return repository.ErrCourierNotFound
+	}
 
 	return err
 }

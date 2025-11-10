@@ -17,10 +17,10 @@ type courierRepositoryPostgres struct {
 	pool *pgxpool.Pool
 }
 
-func NewCourierRepositoryPostgres(ctx context.Context, cfg config.PostgresStorage) (*courierRepositoryPostgres, error) {
+func NewCourierRepositoryPostgres(ctx context.Context, cfg config.PostgresStorage, env string) (*courierRepositoryPostgres, error) {
 	const op = "repository.postgres.NewCourierRepositoryPostgres"
 
-	pgxCfg, err := parseConfig(cfg)
+	pgxCfg, err := parseConfig(cfg, env)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -46,14 +46,18 @@ func NewCourierRepositoryPostgres(ctx context.Context, cfg config.PostgresStorag
 	return &courierRepositoryPostgres{pool: conn}, nil
 }
 
-func parseConfig(cfg config.PostgresStorage) (*pgxpool.Config, error) {
+func parseConfig(cfg config.PostgresStorage, env string) (*pgxpool.Config, error) {
 	const op = "repository.postgres.parseConfig"
+
+	if env == "local" {
+		cfg.Host = "localhost"
+	}
 
 	storageDSN := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
 		cfg.User,
 		cfg.Password,
 		cfg.Host,
-		cfg.DbPort,
+		cfg.Port,
 		cfg.DbName,
 	)
 

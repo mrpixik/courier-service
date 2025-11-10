@@ -5,14 +5,15 @@ import (
 	"unicode"
 )
 
-var validName = regexp.MustCompile(`[A-Za-zА-Яа-яЁё]`)
+var validName = regexp.MustCompile(`^[A-Za-zА-Яа-яЁё]+$`)
 
 func IsValidName(name string) bool {
 	return validName.MatchString(name)
 }
 
 func IsValidPhone(phone string) bool {
-	if len(phone) != 12 {
+	const correctPhoneNumberLen = 12
+	if len(phone) != correctPhoneNumberLen {
 		return false // длина должна быть ровно 12 символов
 	}
 	if phone[0] != '+' {

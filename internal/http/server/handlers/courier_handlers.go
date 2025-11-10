@@ -6,8 +6,9 @@ import (
 	"errors"
 	"github.com/go-chi/chi/v5"
 	"net/http"
+	"service-order-avito/internal/domain/errors/server"
+	"service-order-avito/internal/domain/errors/service"
 	"service-order-avito/internal/http/server/dto"
-	"service-order-avito/internal/service"
 	"strconv"
 )
 
@@ -16,6 +17,7 @@ type сourierService interface {
 	GetCourier(context.Context, int) (*dto.Courier, error)
 	GetAllCouriers(context.Context) ([]dto.Courier, error)
 	UpdateCourier(context.Context, *dto.CourierUpdateRequest) error
+	DeleteCourier(context.Context, int) error
 }
 
 type courierHandler struct {
@@ -29,7 +31,7 @@ func NewCourierHandler(service сourierService) *courierHandler {
 func (ch *courierHandler) Post(w http.ResponseWriter, r *http.Request) {
 	var req dto.CourierCreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, ErrInvalidJSON, http.StatusBadRequest)
+		http.Error(w, server.ErrInvalidJSON, http.StatusBadRequest)
 		return
 	}
 	id, err := ch.service.CreateCourier(r.Context(), &req)
@@ -44,7 +46,7 @@ func (ch *courierHandler) Post(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, service.ErrInvalidStatus):
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		default:
-			http.Error(w, ErrInternalError, http.StatusInternalServerError)
+			http.Error(w, server.ErrInternalError, http.StatusInternalServerError)
 		}
 		return
 	}
@@ -61,7 +63,7 @@ func (ch *courierHandler) Get(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, ErrInvalidCourierId, http.StatusBadRequest)
+		http.Error(w, server.ErrInvalidCourierId, http.StatusBadRequest)
 		return
 	}
 
@@ -73,7 +75,7 @@ func (ch *courierHandler) Get(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, service.ErrCourierNotFound):
 			http.Error(w, err.Error(), http.StatusNotFound)
 		default:
-			http.Error(w, ErrInternalError, http.StatusInternalServerError)
+			http.Error(w, server.ErrInternalError, http.StatusInternalServerError)
 		}
 		return
 	}
@@ -86,7 +88,7 @@ func (ch *courierHandler) Get(w http.ResponseWriter, r *http.Request) {
 func (ch *courierHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	couriers, err := ch.service.GetAllCouriers(r.Context())
 	if err != nil {
-		http.Error(w, ErrInternalError, http.StatusInternalServerError)
+		http.Error(w, server.ErrInternalError, http.StatusInternalServerError)
 		return
 	}
 
@@ -98,7 +100,7 @@ func (ch *courierHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 func (ch *courierHandler) Put(w http.ResponseWriter, r *http.Request) {
 	var req dto.CourierUpdateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, ErrInvalidJSON, http.StatusBadRequest)
+		http.Error(w, server.ErrInvalidJSON, http.StatusBadRequest)
 		return
 	}
 	err := ch.service.UpdateCourier(r.Context(), &req)
@@ -120,6 +122,34 @@ func (ch *courierHandler) Put(w http.ResponseWriter, r *http.Request) {
 	res := dto.CourierUpdateResponse{
 		Message: "courier's profile updated successfully",
 	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(res)
+}
+
+func (ch *courierHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, server.ErrInvalidCourierId, http.StatusBadRequest)
+		return
+	}
+
+	err = ch.service.DeleteCourier(r.Context(), id)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrCourierNotFound):
+			http.Error(w, err.Error(), http.StatusNotFound)
+		default:
+			http.Error(w, server.ErrInternalError, http.StatusInternalServerError)
+		}
+		return
+	}
+	res := dto.CourierDeleteResponse{
+		Message: "courier's profile deleted successfully",
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(res)

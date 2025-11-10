@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"service-order-avito/internal/domain/errors/server"
 	"service-order-avito/internal/http/server/dto"
 )
 
@@ -11,7 +12,7 @@ func PingGetHandler(w http.ResponseWriter, r *http.Request) {
 
 	select {
 	case <-ctx.Done():
-		http.Error(w, ErrRequestCanceled, http.StatusRequestTimeout)
+		http.Error(w, server.ErrRequestCanceled, http.StatusRequestTimeout)
 	default:
 
 		w.Header().Set("Content-Type", "application/json")
@@ -30,7 +31,7 @@ func HealthcheckHeadHandler(w http.ResponseWriter, r *http.Request) {
 
 	select {
 	case <-ctx.Done():
-		http.Error(w, ErrRequestCanceled, http.StatusRequestTimeout)
+		http.Error(w, server.ErrRequestCanceled, http.StatusRequestTimeout)
 	default:
 		w.WriteHeader(http.StatusNoContent)
 	}

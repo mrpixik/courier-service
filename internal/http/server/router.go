@@ -14,6 +14,7 @@ type CourierHandler interface {
 	Get(http.ResponseWriter, *http.Request)
 	GetAll(http.ResponseWriter, *http.Request)
 	Put(http.ResponseWriter, *http.Request)
+	Delete(http.ResponseWriter, *http.Request)
 }
 
 func InitRouter(cfg config.HTTPServer, log *slog.Logger, courierHandler CourierHandler) chi.Router {
@@ -32,6 +33,7 @@ func InitRouter(cfg config.HTTPServer, log *slog.Logger, courierHandler CourierH
 		r.Get("/{id}", courierHandler.Get)
 		r.Post("/", courierHandler.Post)
 		r.Put("/", courierHandler.Put)
+		r.Delete("/{id}", courierHandler.Delete)
 
 	})
 	return router

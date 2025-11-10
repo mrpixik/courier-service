@@ -34,9 +34,9 @@ func main() {
 	defer cancelDB()
 
 	// Repository's Lay
-	courierRepository, err := postgres.NewCourierRepositoryPostgres(ctxDB, cfg.Postgres)
+	courierRepository, err := postgres.NewCourierRepositoryPostgres(ctxDB, cfg.Postgres, cfg.Env)
 	if err != nil {
-		log.Error("init repository: %s", err.Error())
+		log.Error("init repository: " + err.Error())
 		os.Exit(1)
 	}
 	defer func() {

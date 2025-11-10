@@ -7,6 +7,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"service-order-avito/internal/domain"
+	"service-order-avito/internal/domain/errors/repository"
+	"service-order-avito/internal/domain/errors/service"
 	"service-order-avito/internal/http/server/dto"
 )
 
@@ -15,6 +17,7 @@ type CourierRepository interface {
 	GetOneById(context.Context, int) (*domain.Courier, error)
 	GetAll(context.Context) ([]domain.Courier, error)
 	Update(context.Context, *domain.Courier) error
+	DeleteById(context.Context, int) error
 }
 
 // Хочу добавить сюда логгер для того, чтобы отслеживать неявное поведение бд
@@ -29,13 +32,13 @@ func NewCourierService(repository CourierRepository) *courierService {
 
 func (cs *courierService) CreateCourier(ctx context.Context, courierReq *dto.CourierCreateRequest) (int, error) {
 	if !IsValidName(courierReq.Name) {
-		return -1, fmt.Errorf("%w: invalid name", ErrInvalidName)
+		return -1, fmt.Errorf("%w: invalid name", service.ErrInvalidName)
 	}
 	if !IsValidPhone(courierReq.Phone) {
-		return -1, fmt.Errorf("%w: invalid phone", ErrInvalidPhone)
+		return -1, fmt.Errorf("%w: invalid phone", service.ErrInvalidPhone)
 	}
 	if !IsValidStatus(courierReq.Status) {
-		return -1, fmt.Errorf("%w: invalid status", ErrInvalidStatus)
+		return -1, fmt.Errorf("%w: invalid status", service.ErrInvalidStatus)
 	}
 
 	courierDB := domain.Courier{
@@ -50,10 +53,10 @@ func (cs *courierService) CreateCourier(ctx context.Context, courierReq *dto.Cou
 		if errors.As(err, &pgErr) {
 			switch pgErr.Code {
 			case "23505":
-				return -1, ErrCourierAlreadyExists
+				return -1, service.ErrCourierAlreadyExists
 			}
 			// вот такого рода непредвиденные ошибки было бы удобно логгировать
-			return -1, ErrInternalError
+			return -1, service.ErrInternalError
 		}
 	}
 	return id, nil
@@ -63,9 +66,9 @@ func (cs *courierService) GetCourier(ctx context.Context, id int) (*dto.Courier,
 	courierDb, err := cs.repository.GetOneById(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrCourierNotFound
+			return nil, service.ErrCourierNotFound
 		}
-		return nil, ErrInternalError
+		return nil, service.ErrInternalError
 	}
 	courier := dto.Courier{
 		Id:     id,
@@ -81,7 +84,7 @@ func (cs *courierService) GetAllCouriers(ctx context.Context) ([]dto.Courier, er
 	if err != nil {
 
 		//return nil, fmt.Errorf(op+": %w: %w", repository.ErrUnknownError, err)
-		return nil, ErrInternalError
+		return nil, service.ErrInternalError
 	}
 	couriers := make([]dto.Courier, len(couriersDb))
 	for i, courierDb := range couriersDb {
@@ -98,13 +101,13 @@ func (cs *courierService) GetAllCouriers(ctx context.Context) ([]dto.Courier, er
 
 func (cs *courierService) UpdateCourier(ctx context.Context, courierReq *dto.CourierUpdateRequest) error {
 	if courierReq.Name != "" && !IsValidName(courierReq.Name) {
-		return ErrInvalidName
+		return service.ErrInvalidName
 	}
 	if courierReq.Phone != "" && !IsValidPhone(courierReq.Phone) {
-		return ErrInvalidPhone
+		return service.ErrInvalidPhone
 	}
 	if courierReq.Status != "" && !IsValidStatus(courierReq.Status) {
-		return ErrInvalidStatus
+		return service.ErrInvalidStatus
 	}
 
 	courierDb := &domain.Courier{
@@ -115,10 +118,22 @@ func (cs *courierService) UpdateCourier(ctx context.Context, courierReq *dto.Cou
 	}
 
 	if err := cs.repository.Update(ctx, courierDb); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrCourierNotFound
+		if errors.Is(err, repository.ErrCourierNotFound) {
+			return service.ErrCourierNotFound
 		}
 		return err
 	}
+	return nil
+}
+
+func (cs *courierService) DeleteCourier(ctx context.Context, id int) error {
+	err := cs.repository.DeleteById(ctx, id)
+	if err != nil {
+		if errors.Is(err, repository.ErrCourierNotFound) {
+			return service.ErrCourierNotFound
+		}
+		return service.ErrInternalError
+	}
+
 	return nil
 }
