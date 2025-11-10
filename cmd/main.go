@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -22,50 +23,71 @@ func main() {
 
 	// LOGGER
 	log := logger.MustInit(cfg.Env)
-	log.Info("Logger initialized")
+	log.Info("logger initialized")
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	// GS context
+	ctxApp, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
+	// context для бд, отменяется после завершения сервера
+	ctxDB, cancelDB := context.WithCancel(context.Background())
+	defer cancelDB()
+
 	// Repository's Lay
-	courierRepository, err := postgres.NewCourierRepositoryPostgres(ctx, cfg)
+	courierRepository, err := postgres.NewCourierRepositoryPostgres(ctxDB, cfg.Postgres)
 	if err != nil {
-		log.Error("Failed to init repository: " + err.Error())
+		log.Error("init repository: %s", err.Error())
 		os.Exit(1)
 	}
-	log.Info("Courier repository postgres initialized")
+	defer func() {
+		courierRepository.CloseConnection()
+		log.Info("connection with database closed")
+	}()
+	log.Info("courier repository postgres initialized")
 
 	// Service lay
 	courierService := service.NewCourierService(courierRepository)
-	log.Info("Courier service initialized")
+	log.Info("courier service initialized")
 
 	// Controller's lay
 	courierHandler := handlers.NewCourierHandler(courierService)
-	log.Info("Courier handler initialized")
+	log.Info("courier handler initialized")
 
 	// ROUTER & SERVER
-	r := server.InitRouter(ctx, cfg, log, courierHandler)
+	r := server.InitRouter(cfg.HTTP, log, courierHandler)
 
-	srv := &http.Server{Addr: "localhost:" + cfg.ServerPort, Handler: r}
+	srv := &http.Server{
+		Addr:    ":" + cfg.HTTP.Port,
+		Handler: r,
+		BaseContext: func(net.Listener) context.Context {
+			return ctxApp
+		},
+		ReadTimeout:  cfg.HTTP.ReadTimeout,
+		WriteTimeout: cfg.HTTP.WriteTimeout,
+		IdleTimeout:  cfg.HTTP.ShutdownTimeout,
+	}
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Error("Server start up failed: %s", err.Error())
+			log.Error("server start up: %s", err.Error())
 		}
 	}()
-	log.Info("Listening on " + "localhost:" + cfg.ServerPort)
+	log.Info("listening on: " + cfg.HTTP.Port)
 
-	gracefulShutdownServer(ctx, cfg, log, srv)
+	gracefulShutdownServer(ctxApp, cfg.HTTP, log, srv, cancelDB)
 }
 
-func gracefulShutdownServer(ctx context.Context, cfg config.Config, log *slog.Logger, srv *http.Server) {
-	<-ctx.Done()
+func gracefulShutdownServer(ctxApp context.Context, cfg config.HTTPServer, log *slog.Logger, srv *http.Server, cancelDB context.CancelFunc) {
+	<-ctxApp.Done()
+	log.Info("shutdown signal received. starting graceful shutdown")
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.IdleTimeout)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
 	defer cancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Info("Server shutdown error: %s\n", err.Error())
+		log.Error("server shutdown: %s", err.Error())
 	} else {
-		log.Info("Server gracefully stopped")
+		log.Info("server gracefully stopped")
 	}
+
+	cancelDB()
 }

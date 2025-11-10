@@ -9,6 +9,11 @@ import (
 	"time"
 )
 
+func (s *courierRepositoryPostgres) CloseConnection() {
+	s.pool.Close()
+	return
+}
+
 func (s *courierRepositoryPostgres) Create(ctx context.Context, courier domain.Courier) (int, error) {
 	sql := `
         INSERT INTO couriers (name, phone, status)

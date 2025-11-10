@@ -2,38 +2,40 @@ package config
 
 import (
 	"github.com/caarlos0/env/v11"
-	"github.com/joho/godotenv"
 	"github.com/spf13/pflag"
 	"log"
 	"time"
 )
 
 type Config struct {
-	Env string `env:"ENVIRONMENT" envDefault:"prod"` //local, dev, prod -- пока применяется только для настройки логгера
-	PostgresStorage
-	HTTPServer
+	Env      string          `env:"ENVIRONMENT" envDefault:"prod"` //local, dev, prod -- пока применяется только для настройки логгера
+	Postgres PostgresStorage `envPrefix:"POSTGRES_"`
+	HTTP     HTTPServer      `envPrefix:"HTTP_"`
 }
 
 type HTTPServer struct {
-	ServerPort  string        `env:"PORT" envDefault:"8080"`
-	IdleTimeout time.Duration `env:"IDLE_TIMEOUT" envDefault:"30s"`
+	Port            string        `env:"PORT" envDefault:"8080"`
+	ShutdownTimeout time.Duration `env:"SHUTDOWN_TIMEOUT" envDefault:"30s"`
+	ReadTimeout     time.Duration `env:"READ_TIMEOUT" envDefault:"10s"`
+	WriteTimeout    time.Duration `env:"WRITE_TIMEOUT" envDefault:"15s"`
+	IdleTimeout     time.Duration `env:"IDLE_TIMEOUT" envDefault:"60s"`
 }
 
 type PostgresStorage struct {
-	User            string        `env:"POSTGRES_USER,required"`
-	Password        string        `env:"POSTGRES_PASSWORD,required"`
-	Host            string        `env:"POSTGRES_HOST,required"`
-	DbPort          string        `env:"POSTGRES_PORT,required"`
-	DbName          string        `env:"POSTGRES_DB_NAME,required"`
-	MaxConns        int32         `env:"POSTGRES_MAX_CONNS,required"`
-	MinConns        int32         `env:"POSTGRES_MIN_CONNS,required"`
-	MaxConnLifeTime time.Duration `env:"POSTGRES_MAX_CONN_LIFE_TIME,required"`
+	User            string        `env:"USER,required"`
+	Password        string        `env:"PASSWORD,required"`
+	Host            string        `env:"HOST,required"`
+	DbPort          string        `env:"PORT,required"`
+	DbName          string        `env:"DB_NAME,required"`
+	MaxConns        int32         `env:"MAX_CONNS,required"`
+	MinConns        int32         `env:"MIN_CONNS,required"`
+	MaxConnLifeTime time.Duration `env:"MAX_CONN_LIFE_TIME,required"`
 }
 
 func MustLoad() Config {
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("unable to load config: \n%s", err.Error())
-	}
+	//if err := godotenv.Load(); err != nil {
+	//	log.Fatalf("unable to load config: \n%s", err.Error())
+	//}
 
 	var config Config
 
@@ -43,7 +45,7 @@ func MustLoad() Config {
 	}
 
 	// Значение порта переопределяется только в случае, если в --port передается какое-то значение
-	pflag.StringVar(&config.ServerPort, "port", config.ServerPort, "server's port")
+	pflag.StringVar(&config.HTTP.Port, "port", config.HTTP.Port, "server's port")
 
 	pflag.Parse()
 

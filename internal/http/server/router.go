@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"github.com/go-chi/chi/v5"
 	"log/slog"
 	"net/http"
@@ -17,11 +16,10 @@ type CourierHandler interface {
 	Put(http.ResponseWriter, *http.Request)
 }
 
-func InitRouter(ctx context.Context, cfg config.Config, log *slog.Logger, courierHandler CourierHandler) chi.Router {
+func InitRouter(cfg config.HTTPServer, log *slog.Logger, courierHandler CourierHandler) chi.Router {
 	router := chi.NewRouter()
 
 	router.Use(
-		middleware.WithGracefulShutdown(ctx),
 		middleware.WithLogger(log),
 	)
 

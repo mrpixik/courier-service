@@ -11,7 +11,7 @@ import (
 	"strconv"
 )
 
-type CourierService interface {
+type сourierService interface {
 	CreateCourier(context.Context, *dto.CourierCreateRequest) (int, error)
 	GetCourier(context.Context, int) (*dto.Courier, error)
 	GetAllCouriers(context.Context) ([]dto.Courier, error)
@@ -19,15 +19,13 @@ type CourierService interface {
 }
 
 type courierHandler struct {
-	service CourierService
+	service сourierService
 }
 
-func NewCourierHandler(service CourierService) *courierHandler {
+func NewCourierHandler(service сourierService) *courierHandler {
 	return &courierHandler{service: service}
 }
 
-// Я не всоем понял, стоит ли добавлять такую же систему, как и в хендлерах /ping и /healthcheck
-// которая бы проверяла завершение контекста через select.
 func (ch *courierHandler) Post(w http.ResponseWriter, r *http.Request) {
 	var req dto.CourierCreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -56,7 +54,7 @@ func (ch *courierHandler) Post(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(res)
+	_ = json.NewEncoder(w).Encode(res)
 }
 
 func (ch *courierHandler) Get(w http.ResponseWriter, r *http.Request) {
@@ -82,7 +80,7 @@ func (ch *courierHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(courier)
+	_ = json.NewEncoder(w).Encode(courier)
 }
 
 func (ch *courierHandler) GetAll(w http.ResponseWriter, r *http.Request) {
@@ -94,7 +92,7 @@ func (ch *courierHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(couriers)
+	_ = json.NewEncoder(w).Encode(couriers)
 }
 
 func (ch *courierHandler) Put(w http.ResponseWriter, r *http.Request) {
@@ -124,5 +122,5 @@ func (ch *courierHandler) Put(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(res)
+	_ = json.NewEncoder(w).Encode(res)
 }
