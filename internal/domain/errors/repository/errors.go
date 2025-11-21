@@ -3,6 +3,7 @@ package repository
 import "errors"
 
 var (
+	ErrCourierExists   = errors.New("courier already exists")
 	ErrCourierNotFound = errors.New("courier not found")
-	ErrUnknownError    = errors.New("internal error")
+	ErrInternalError   = errors.New("internal error")
 )

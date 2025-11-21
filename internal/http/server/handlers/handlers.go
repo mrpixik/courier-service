@@ -3,8 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"service-order-avito/internal/domain/dto"
 	"service-order-avito/internal/domain/errors/server"
-	"service-order-avito/internal/http/server/dto"
 )
 
 func PingGetHandler(w http.ResponseWriter, r *http.Request) {

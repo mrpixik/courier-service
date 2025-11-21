@@ -33,16 +33,19 @@ func main() {
 	ctxDB, cancelDB := context.WithCancel(context.Background())
 	defer cancelDB()
 
-	// Repository's Lay
-	courierRepository, err := postgres.NewCourierRepositoryPostgres(ctxDB, cfg.Postgres, cfg.Env)
+	// BD connection
+	conn, err := postgres.ConnectPostgres(ctxDB, cfg.Postgres, cfg.Env)
 	if err != nil {
-		log.Error("init repository: " + err.Error())
+		log.Error("connect database " + err.Error())
 		os.Exit(1)
 	}
 	defer func() {
-		courierRepository.CloseConnection()
+		conn.Close()
 		log.Info("connection with database closed")
 	}()
+
+	// Repository's Lay
+	courierRepository := postgres.NewCourierRepositoryPostgres(conn)
 	log.Info("courier repository postgres initialized")
 
 	// Service lay
