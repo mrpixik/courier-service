@@ -13,6 +13,24 @@ down_prod: # остановка всех контейнеров
 	docker compose stop migrations
 	docker compose stop postgres
 
+run_tests:
+	go test ./internal/http/server/handlers/courier
+	go test ./internal/http/server/handlers/delivery
+	go test ./internal/service/courier
+	go test ./internal/service/delivery
+
+run_tests_with_coverage:
+	go test -cover ./internal/http/server/handlers/courier
+	go test -cover ./internal/http/server/handlers/delivery
+	go test -cover ./internal/service/courier
+	go test -cover ./internal/service/delivery
+
+run_test_integration:
+	docker-compose -f docker-compose.tests.yaml up -d
+	go test -v -tags=integration ./internal/repository/postgres/integration/courier
+	go test -v -tags=integration ./internal/repository/postgres/integration/delivery
+	docker-compose -f docker-compose.tests.yaml down -v
+
 deploy_local: #для личного удобства
 	docker build -t courier-service:latest -f ./deploy/docker/Dockerfile .
 

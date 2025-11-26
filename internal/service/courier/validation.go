@@ -1,7 +1,8 @@
-package service
+package courier
 
 import (
 	"regexp"
+	"service-order-avito/internal/domain"
 	"unicode"
 )
 
@@ -28,7 +29,14 @@ func IsValidPhone(phone string) bool {
 }
 
 func IsValidStatus(status string) bool {
-	if status == "available" || status == "busy" || status == "paused" {
+	if status == domain.StatusAvailable || status == domain.StatusBusy || status == domain.StatusPaused {
+		return true
+	}
+	return false
+}
+
+func IsValidTransportType(transportType string) bool {
+	if transportType == domain.TransportTypeFoot || transportType == domain.TransportTypeScooter || transportType == domain.TransportTypeCar {
 		return true
 	}
 	return false

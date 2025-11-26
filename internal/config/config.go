@@ -13,8 +13,9 @@ import (
 type Config struct {
 	Env string //local, dev, prod ||| default: local
 	//Env      string          `env:"ENVIRONMENT,required"` //local, dev, prod -- пока применяется только для настройки логгера
-	Postgres PostgresStorage `envPrefix:"POSTGRES_"`
-	HTTP     HTTPServer      `envPrefix:"HTTP_"`
+	Postgres                   PostgresStorage `envPrefix:"POSTGRES_"`
+	HTTP                       HTTPServer      `envPrefix:"HTTP_"`
+	DeliveryWorkerTickInterval time.Duration   `env:"DELIVERY_WORKER_TICK_INTERVAL" envDefault:"60s"`
 }
 
 type HTTPServer struct {

@@ -1,48 +1,48 @@
-package service
+package courier
 
 import (
 	"context"
-	"fmt"
 	"service-order-avito/internal/adapters"
 	"service-order-avito/internal/domain"
 	"service-order-avito/internal/domain/dto"
 	"service-order-avito/internal/domain/errors/service"
+	"service-order-avito/internal/service/dep"
 )
 
-type CourierRepository interface {
-	Create(context.Context, domain.Courier) (int, error)
-	GetOneById(context.Context, int) (*domain.Courier, error)
-	GetAll(context.Context) ([]domain.Courier, error)
-	Update(context.Context, *domain.Courier) error
-	DeleteById(context.Context, int) error
-}
-
 type courierService struct {
-	repository CourierRepository
+	tm         dep.TransactionManager
+	repository dep.CourierRepository
 }
 
-func NewCourierService(repository CourierRepository) *courierService {
-	return &courierService{repository: repository}
+func NewCourierService(tm dep.TransactionManager, repository dep.CourierRepository) *courierService {
+	return &courierService{tm: tm, repository: repository}
 }
 
 func (cs *courierService) CreateCourier(ctx context.Context, req *dto.CreateCourierRequest) (*dto.CreateCourierResponse, error) {
 	if !IsValidName(req.Name) {
-		return nil, fmt.Errorf("%w: invalid name", service.ErrInvalidName)
+		return nil, service.ErrInvalidName
 	}
 	if !IsValidPhone(req.Phone) {
-		return nil, fmt.Errorf("%w: invalid phone", service.ErrInvalidPhone)
+		return nil, service.ErrInvalidPhone
 	}
 	if !IsValidStatus(req.Status) {
-		return nil, fmt.Errorf("%w: invalid status", service.ErrInvalidStatus)
+		return nil, service.ErrInvalidStatus
+	}
+	// выбрал вариант не возвращать ошибку, так как все равно есть дефолтное значение "on_foot"
+	// (хотя по такой логике, надо было и с полем status так же сделать)
+	if !IsValidTransportType(req.TransportType) {
+		req.TransportType = "on_foot"
 	}
 
 	courierDB := domain.Courier{
-		Name:   req.Name,
-		Phone:  req.Phone,
-		Status: req.Status,
+		Name:          req.Name,
+		Phone:         req.Phone,
+		Status:        req.Status,
+		TransportType: req.TransportType,
 	}
 
 	id, err := cs.repository.Create(ctx, courierDB)
+
 	if err != nil {
 		return nil, adapters.ErrUnwrapRepoToService(err)
 	}
@@ -50,15 +50,17 @@ func (cs *courierService) CreateCourier(ctx context.Context, req *dto.CreateCour
 }
 
 func (cs *courierService) GetCourier(ctx context.Context, req *dto.GetCourierRequest) (*dto.GetCourierResponse, error) {
-	courierDb, err := cs.repository.GetOneById(ctx, req.Id)
+	courierDb, err := cs.repository.GetById(ctx, req.Id)
 	if err != nil {
 		return nil, adapters.ErrUnwrapRepoToService(err)
 	}
+
 	courier := dto.GetCourierResponse{
-		Id:     req.Id,
-		Name:   courierDb.Name,
-		Phone:  courierDb.Phone,
-		Status: courierDb.Status,
+		Id:            req.Id,
+		Name:          courierDb.Name,
+		Phone:         courierDb.Phone,
+		Status:        courierDb.Status,
+		TransportType: courierDb.TransportType,
 	}
 	return &courier, nil
 }
@@ -74,10 +76,11 @@ func (cs *courierService) GetAllCouriers(ctx context.Context) ([]dto.GetCourierR
 	couriers := make([]dto.GetCourierResponse, len(couriersDb))
 	for i, courierDb := range couriersDb {
 		couriers[i] = dto.GetCourierResponse{
-			Id:     courierDb.Id,
-			Name:   courierDb.Name,
-			Phone:  courierDb.Phone,
-			Status: courierDb.Status,
+			Id:            courierDb.Id,
+			Name:          courierDb.Name,
+			Phone:         courierDb.Phone,
+			Status:        courierDb.Status,
+			TransportType: courierDb.TransportType,
 		}
 	}
 
@@ -94,12 +97,16 @@ func (cs *courierService) UpdateCourier(ctx context.Context, req *dto.UpdateCour
 	if req.Status != "" && !IsValidStatus(req.Status) {
 		return service.ErrInvalidStatus
 	}
+	if req.TransportType != "" && !IsValidTransportType(req.TransportType) {
+		return service.ErrInvalidTransportType
+	}
 
-	courierDb := &domain.Courier{
-		Id:     req.Id,
-		Name:   req.Name,
-		Phone:  req.Phone,
-		Status: req.Status,
+	courierDb := domain.Courier{
+		Id:            req.Id,
+		Name:          req.Name,
+		Phone:         req.Phone,
+		Status:        req.Status,
+		TransportType: req.TransportType,
 	}
 
 	if err := cs.repository.Update(ctx, courierDb); err != nil {

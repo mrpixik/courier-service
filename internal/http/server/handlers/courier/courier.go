@@ -1,4 +1,4 @@
-package handlers
+package courier
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	"strconv"
 )
 
+// mockgen -source="internal/http/server/handlers/courier/courier.go" -destination="internal/http/server/handlers/courier/mocks/mock_courier_service.go"
 type сourierService interface {
 	CreateCourier(context.Context, *dto.CreateCourierRequest) (*dto.CreateCourierResponse, error)
 	GetCourier(context.Context, *dto.GetCourierRequest) (*dto.GetCourierResponse, error)
@@ -49,7 +50,7 @@ func (ch *courierHandler) Get(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		adapters.WriteError(w, server.ErrInvalidJSON, http.StatusBadRequest)
+		adapters.WriteError(w, server.ErrInvalidCourierId, http.StatusBadRequest)
 		return
 	}
 
@@ -103,7 +104,7 @@ func (ch *courierHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		adapters.WriteError(w, server.ErrInvalidJSON, http.StatusBadRequest)
+		adapters.WriteError(w, server.ErrInvalidCourierId, http.StatusBadRequest)
 		return
 	}
 

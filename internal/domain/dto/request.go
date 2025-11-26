@@ -5,22 +5,34 @@ type GetCourierRequest struct {
 	Id int `json:"id"`
 }
 
-// CreateCourierRequest запрос на создание профиля
+// CreateCourierRequest запрос на создание профиля курьера
 type CreateCourierRequest struct {
-	Name   string `json:"name"`
-	Phone  string `json:"phone"`
-	Status string `json:"status"`
+	Name          string `json:"name"`
+	Phone         string `json:"phone"`
+	Status        string `json:"status"`
+	TransportType string `json:"transport_type"`
 }
 
-// UpdateCourierRequest запрос на обновление профиля
+// UpdateCourierRequest запрос на обновление данных курьера
 type UpdateCourierRequest struct {
-	Id     int    `json:"id"`
-	Name   string `json:"name"`
-	Phone  string `json:"phone"`
-	Status string `json:"status"`
+	Id            int    `json:"id"`
+	Name          string `json:"name"`
+	Phone         string `json:"phone"`
+	Status        string `json:"status"`
+	TransportType string `json:"transport_type"`
 }
 
-// DeleteCourierRequest запрос за получение данных о курьере
+// DeleteCourierRequest запрос за удаление данных о курьере
 type DeleteCourierRequest struct {
 	Id int `json:"id"`
+}
+
+// AssignDeliveryRequest запрос на назначение заказа
+type AssignDeliveryRequest struct {
+	OrderId string `json:"order_id"`
+}
+
+// UnassignDeliveryRequest запрос на завершение заказа
+type UnassignDeliveryRequest struct {
+	OrderId string `json:"order_id"`
 }

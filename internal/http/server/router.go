@@ -9,7 +9,7 @@ import (
 	"service-order-avito/internal/http/server/handlers"
 )
 
-type CourierHandler interface {
+type courierHandler interface {
 	Post(http.ResponseWriter, *http.Request)
 	Get(http.ResponseWriter, *http.Request)
 	GetAll(http.ResponseWriter, *http.Request)
@@ -17,7 +17,12 @@ type CourierHandler interface {
 	Delete(http.ResponseWriter, *http.Request)
 }
 
-func InitRouter(cfg config.HTTPServer, log *slog.Logger, courierHandler CourierHandler) chi.Router {
+type deliveryHandler interface {
+	PostAssign(http.ResponseWriter, *http.Request)
+	PostUnassign(http.ResponseWriter, *http.Request)
+}
+
+func InitRouter(cfg config.HTTPServer, log *slog.Logger, courierHandler courierHandler, deliveryHandler deliveryHandler) chi.Router {
 	router := chi.NewRouter()
 
 	router.Use(
@@ -34,7 +39,11 @@ func InitRouter(cfg config.HTTPServer, log *slog.Logger, courierHandler CourierH
 		r.Post("/", courierHandler.Post)
 		r.Put("/", courierHandler.Put)
 		r.Delete("/{id}", courierHandler.Delete)
+	})
 
+	router.Route("/delivery", func(r chi.Router) {
+		r.Post("/assign", deliveryHandler.PostAssign)
+		r.Post("/unassign", deliveryHandler.PostUnassign)
 	})
 	return router
 }

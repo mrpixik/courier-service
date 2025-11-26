@@ -15,9 +15,15 @@ import (
 // но так как это учебный проект, решил сделать все максимально правильно с точки зрения теории
 // P.S. можно подумать побольше и, например, переделать это в фабрику
 var repoToServiceMap = map[error]error{
-	repository.ErrCourierExists:   service.ErrCourierExists,
-	repository.ErrCourierNotFound: service.ErrCourierNotFound,
-	repository.ErrInternalError:   service.ErrInternalError,
+	// Courier
+	repository.ErrCourierExists:       service.ErrCourierExists,
+	repository.ErrCourierNotFound:     service.ErrCourierNotFound,
+	repository.ErrNoAvailableCouriers: service.ErrNoAvailableCouriers,
+	// Delivery
+	repository.ErrDeliveryExists:   service.ErrDeliveryExists,
+	repository.ErrDeliveryNotFound: service.ErrDeliveryNotFound,
+	// Default
+	repository.ErrInternalError: service.ErrInternalError,
 }
 
 func ErrUnwrapRepoToService(err error) error {
@@ -38,12 +44,19 @@ type errorMeta struct {
 }
 
 var serviceErrorMap = map[error]errorMeta{
-	service.ErrInvalidName:     {server.ErrInvalidCourierName, http.StatusNotFound},
-	service.ErrInvalidStatus:   {server.ErrInvalidCourierStatus, http.StatusNotFound},
-	service.ErrInvalidPhone:    {server.ErrInvalidCourierPhone, http.StatusConflict},
-	service.ErrCourierExists:   {server.ErrCourierExists, http.StatusBadRequest},
-	service.ErrCourierNotFound: {server.ErrCourierNotFound, http.StatusNotFound},
-	service.ErrInternalError:   {server.ErrInternalError, http.StatusInternalServerError},
+	// Courier
+	service.ErrInvalidName:          {server.ErrInvalidCourierName, http.StatusBadRequest},
+	service.ErrInvalidStatus:        {server.ErrInvalidCourierStatus, http.StatusBadRequest},
+	service.ErrInvalidPhone:         {server.ErrInvalidCourierPhone, http.StatusBadRequest},
+	service.ErrInvalidTransportType: {server.ErrInvalidTransportType, http.StatusBadRequest},
+	service.ErrCourierExists:        {server.ErrCourierExists, http.StatusConflict},
+	service.ErrCourierNotFound:      {server.ErrCourierNotFound, http.StatusNotFound},
+	service.ErrNoAvailableCouriers:  {server.ErrNoAvailableCouriers, http.StatusConflict},
+	// Delivery
+	service.ErrDeliveryExists:   {server.ErrDeliveryExists, http.StatusConflict},
+	service.ErrDeliveryNotFound: {server.ErrDeliveryNotFound, http.StatusNotFound},
+	// Default
+	service.ErrInternalError: {server.ErrInternalError, http.StatusInternalServerError},
 }
 
 // WriteServiceError принимает ошибку уровня service и пишет ошибку уровня контроллера в ResponseWriter
