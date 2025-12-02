@@ -27,7 +27,6 @@ func (w *deliveryMonitorWorker) Start(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			ticker.Stop()
 			w.log.Info("delivery monitor worker gracefully stopped")
 			return
 		case <-ticker.C:

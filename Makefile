@@ -9,9 +9,9 @@ up_prod: # запуск всего сервера (подгружается об
 	docker-compose -f docker-compose.prod.yaml up -d
 
 down_prod: # остановка всех контейнеров
-	docker compose stop service-courier
-	docker compose stop migrations
-	docker compose stop postgres
+	docker compose -f docker-compose.prod.yaml stop service-courier
+	docker compose -f docker-compose.prod.yaml stop migrations
+	docker compose -f docker-compose.prod.yaml stop postgres
 
 run_tests:
 	go test ./internal/http/server/handlers/courier
