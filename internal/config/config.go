@@ -16,6 +16,11 @@ type Config struct {
 	Postgres                   PostgresStorage `envPrefix:"POSTGRES_"`
 	HTTP                       HTTPServer      `envPrefix:"HTTP_"`
 	DeliveryWorkerTickInterval time.Duration   `env:"DELIVERY_WORKER_TICK_INTERVAL" envDefault:"60s"`
+	GRPC                       GRPC            `envPrefix:"GRPC_"`
+}
+
+type GRPC struct {
+	OrderServiceDSN string `env:"ORDER_SERVICE_DSN,required"`
 }
 
 type HTTPServer struct {

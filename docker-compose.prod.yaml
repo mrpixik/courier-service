@@ -17,7 +17,7 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - local
+      - service-order-default
 
 
   migrations:
@@ -33,7 +33,7 @@ services:
     volumes:
       - ./migrations:/migrations
     networks:
-      - local
+      - service-order-default
 
   service-courier:
     image: pixik/courier-service:latest
@@ -43,17 +43,20 @@ services:
     env_file:
       - .env
     ports:
-      - 8080:${HTTP_PORT}
+      - 8082:${HTTP_PORT}
     restart: on-failure
     networks:
-      - local
+      - service-order-default
+      - infrastructure_default
     depends_on:
       - postgres
       - migrations
 
 networks:
-  local:
+  service-order-default:
     driver: bridge
+  infrastructure_default:
+    external: true
 
 volumes:
   pgdata:

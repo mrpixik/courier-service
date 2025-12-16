@@ -4,15 +4,19 @@ up_local: # запуск бд и миграций через докер. Сам�
 
 down_local: # остановка контейнеров. чтобы завершить работу сервиса необходимо еще отправить ctr+c в консоль
 	docker compose -f docker-compose.local.yaml stop
+#	docker compose -f infrastructure/docker-compose.yml up -d
+#	docker compose -f service-order/docker-compose.yaml up -d
+#	docker compose -f docker-compose.prod.yaml up -d
 
 up_prod: # запуск всего сервера (подгружается образ с моего dockerHub)
-	docker-compose -f docker-compose.prod.yaml up -d
+	docker compose -f docker-compose.prod.yaml up -d
 
 down_prod: # остановка всех контейнеров
 	docker compose -f docker-compose.prod.yaml stop service-courier
 	docker compose -f docker-compose.prod.yaml stop migrations
 	docker compose -f docker-compose.prod.yaml stop postgres
 
+# Тесты
 run_tests:
 	go test ./internal/http/server/handlers/courier
 	go test ./internal/http/server/handlers/delivery
@@ -31,6 +35,11 @@ run_test_integration:
 	go test -v -tags=integration ./internal/repository/postgres/integration/delivery
 	docker-compose -f docker-compose.tests.yaml down -v
 
+# Генерация proto файлов
+protoc:
+	protoc --proto_path=. --go_out=. --go-grpc_out=. proto/order/order.proto
+
+# Деплой (для себя)
 deploy_local: #для личного удобства
 	docker build -t courier-service:latest -f ./deploy/docker/Dockerfile .
 

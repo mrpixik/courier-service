@@ -3,22 +3,28 @@ package main
 import (
 	"context"
 	"errors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"log/slog"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
+	"service-order-avito/api/order"
 	"service-order-avito/internal/config"
+	order2 "service-order-avito/internal/gateway/order"
 	"service-order-avito/internal/http/server"
 	courier2 "service-order-avito/internal/http/server/handlers/courier"
 	delivery2 "service-order-avito/internal/http/server/handlers/delivery"
 	"service-order-avito/internal/repository/postgres"
 	"service-order-avito/internal/service/courier"
 	"service-order-avito/internal/service/delivery"
-	"service-order-avito/internal/worker"
+	delivery_worker "service-order-avito/internal/worker/delivery"
+	order_worker "service-order-avito/internal/worker/order"
 	"service-order-avito/pkg/logger"
 	"syscall"
+	"time"
 )
 
 func main() {
@@ -59,10 +65,27 @@ func main() {
 	deliveryService := delivery.NewDeliveryService(transactionManager, courierRepository, deliveryRepository)
 	log.Info("service lay is initialized")
 
-	// Worker
-	deliveryMonitorWorker := worker.NewDeliveryMonitorWorker(cfg.DeliveryWorkerTickInterval, log, deliveryService)
+	// Workers
+	deliveryMonitorWorker := delivery_worker.NewDeliveryMonitorWorker(cfg.DeliveryWorkerTickInterval, log, deliveryService)
 	go deliveryMonitorWorker.Start(ctxApp)
 	log.Info("delivery monitor worker is started")
+
+	connRPC, err := grpc.NewClient(cfg.GRPC.OrderServiceDSN, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Error("unable to connect to order-service")
+		os.Exit(1)
+	}
+	orderServiceClient := order.NewOrdersServiceClient(connRPC)
+	orderGateway := order2.NewOrderGateway(orderServiceClient)
+
+	orderServiceMonitorWorker := order_worker.NewOrderMonitorWorker(
+		time.Second*5,
+		log,
+		deliveryService,
+		orderGateway,
+	)
+	go orderServiceMonitorWorker.Start(ctxApp)
+	log.Info("order-service monitor worker is started")
 
 	// Controller lay
 	courierHandler := courier2.NewCourierHandler(courierService)

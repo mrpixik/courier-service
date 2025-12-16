@@ -8,6 +8,7 @@ RUN go mod download
 COPY pkg ./pkg
 COPY internal ./internal/
 COPY cmd ./cmd/
+COPY api ./api/
 
 RUN go build -v -o courier-service ./cmd/main.go
 
