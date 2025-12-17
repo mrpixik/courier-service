@@ -1,6 +1,12 @@
-package domain
+package model
 
 import "time"
+
+const (
+	StatusAssigned   = "assigned"
+	StatusUnassigned = "unassigned"
+	StatusCompleted  = "completed"
+)
 
 // Delivery сущность из таблицы delivery
 type Delivery struct {

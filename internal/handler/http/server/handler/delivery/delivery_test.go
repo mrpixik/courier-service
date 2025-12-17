@@ -10,7 +10,7 @@ import (
 	"service-order-avito/internal/domain/dto"
 	"service-order-avito/internal/domain/errors/server"
 	"service-order-avito/internal/domain/errors/service"
-	mock_delivery "service-order-avito/internal/http/server/handlers/delivery/mocks"
+	"service-order-avito/internal/handler/http/server/handler/delivery/mocks"
 	"testing"
 	"time"
 )

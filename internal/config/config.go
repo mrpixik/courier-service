@@ -17,10 +17,17 @@ type Config struct {
 	HTTP                       HTTPServer      `envPrefix:"HTTP_"`
 	DeliveryWorkerTickInterval time.Duration   `env:"DELIVERY_WORKER_TICK_INTERVAL" envDefault:"60s"`
 	GRPC                       GRPC            `envPrefix:"GRPC_"`
+	Kafka
 }
 
 type GRPC struct {
 	OrderServiceDSN string `env:"ORDER_SERVICE_DSN,required"`
+}
+
+// Пока будем исходить из логики, что мы слушаем только 1 топик
+type Kafka struct {
+	ClientDSN string `env:"KAFKA_CLIENT_DSN,required"`
+	TopicName string `env:"KAFKA_TOPIC_NAME,required"`
 }
 
 type HTTPServer struct {

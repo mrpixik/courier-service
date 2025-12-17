@@ -3,9 +3,9 @@ package courier
 import (
 	"context"
 	"service-order-avito/internal/adapters"
-	"service-order-avito/internal/domain"
 	"service-order-avito/internal/domain/dto"
 	"service-order-avito/internal/domain/errors/service"
+	"service-order-avito/internal/domain/model"
 	"service-order-avito/internal/service/dep"
 )
 
@@ -34,7 +34,7 @@ func (cs *courierService) CreateCourier(ctx context.Context, req *dto.CreateCour
 		req.TransportType = "on_foot"
 	}
 
-	courierDB := domain.Courier{
+	courierDB := model.Courier{
 		Name:          req.Name,
 		Phone:         req.Phone,
 		Status:        req.Status,
@@ -101,7 +101,7 @@ func (cs *courierService) UpdateCourier(ctx context.Context, req *dto.UpdateCour
 		return service.ErrInvalidTransportType
 	}
 
-	courierDb := domain.Courier{
+	courierDb := model.Courier{
 		Id:            req.Id,
 		Name:          req.Name,
 		Phone:         req.Phone,

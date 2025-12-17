@@ -47,3 +47,10 @@ type UnassignDeliveryResponse struct {
 	Status    string `json:"status"`
 	CourierId int    `json:"courier_id"`
 }
+
+// CompleteDeliveryResponse запрос на снятие заказа
+type CompleteDeliveryResponse struct {
+	OrderId   string `json:"order_id"`
+	Status    string `json:"status"`
+	CourierId int    `json:"courier_id"`
+}

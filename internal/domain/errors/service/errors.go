@@ -14,6 +14,8 @@ var (
 	// Delivery
 	ErrDeliveryExists   = errors.New("delivery already exists")
 	ErrDeliveryNotFound = errors.New("delivery not found")
+	// Message Broker
+	ErrUnknownOrderStatus = errors.New("unknown order status")
 	// Default
 	ErrInternalError = errors.New("internal error")
 )

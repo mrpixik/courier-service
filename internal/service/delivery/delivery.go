@@ -3,9 +3,9 @@ package delivery
 import (
 	"context"
 	"service-order-avito/internal/adapters"
-	"service-order-avito/internal/domain"
 	"service-order-avito/internal/domain/dto"
 	"service-order-avito/internal/domain/errors/service"
+	"service-order-avito/internal/domain/model"
 	"service-order-avito/internal/service/dep"
 	"time"
 )
@@ -21,14 +21,14 @@ func NewDeliveryService(tm dep.TransactionManager, courRepo dep.CourierRepositor
 	return &deliveryService{tm: tm, delRepo: delRepo, courRepo: courRepo, delTimeCalc: NewDeliveryTimeFactory()}
 }
 
-func (ds *deliveryService) AssignDelivery(ctx context.Context, req *dto.AssignDeliveryRequest) (*dto.AssignDeliveryResponse, error) {
+func (ds *deliveryService) Assign(ctx context.Context, req *dto.AssignDeliveryRequest) (*dto.AssignDeliveryResponse, error) {
 	var res *dto.AssignDeliveryResponse
 	err := ds.tm.Begin(ctx, func(ctx context.Context) error {
 		courier, err := ds.courRepo.GetAvailable(ctx)
 		if err != nil {
 			return err
 		}
-		delivery := domain.Delivery{
+		delivery := model.Delivery{
 			CourierId:  courier.Id,
 			OrderId:    req.OrderId,
 			AssignedAt: time.Now(),
@@ -40,9 +40,9 @@ func (ds *deliveryService) AssignDelivery(ctx context.Context, req *dto.AssignDe
 			return err
 		}
 
-		assignedCourier := domain.Courier{
+		assignedCourier := model.Courier{
 			Id:              courier.Id,
-			Status:          domain.StatusBusy,
+			Status:          model.StatusBusy,
 			TotalDeliveries: courier.TotalDeliveries + 1,
 		}
 
@@ -65,7 +65,7 @@ func (ds *deliveryService) AssignDelivery(ctx context.Context, req *dto.AssignDe
 	return res, nil
 }
 
-func (ds *deliveryService) UnassignDelivery(ctx context.Context, req *dto.UnassignDeliveryRequest) (*dto.UnassignDeliveryResponse, error) {
+func (ds *deliveryService) Unassign(ctx context.Context, req *dto.UnassignDeliveryRequest) (*dto.UnassignDeliveryResponse, error) {
 	var res *dto.UnassignDeliveryResponse
 	err := ds.tm.Begin(ctx, func(ctx context.Context) error {
 		delivery, err := ds.delRepo.GetByOrderId(ctx, req.OrderId)
@@ -78,9 +78,9 @@ func (ds *deliveryService) UnassignDelivery(ctx context.Context, req *dto.Unassi
 			return err
 		}
 
-		courier := domain.Courier{
+		courier := model.Courier{
 			Id:     delivery.CourierId,
-			Status: domain.StatusAvailable,
+			Status: model.StatusAvailable,
 		}
 
 		err = ds.courRepo.Update(ctx, courier)
@@ -90,7 +90,7 @@ func (ds *deliveryService) UnassignDelivery(ctx context.Context, req *dto.Unassi
 
 		res = &dto.UnassignDeliveryResponse{
 			OrderId:   req.OrderId,
-			Status:    "unassigned", // пусть будет эта магическая строчка, а то я не знаю где ее нормально объявить:)
+			Status:    model.StatusUnassigned,
 			CourierId: courier.Id,
 		}
 		return nil
@@ -101,9 +101,9 @@ func (ds *deliveryService) UnassignDelivery(ctx context.Context, req *dto.Unassi
 	return res, nil
 }
 
-// UnassignAllCompletedDeliveries завершает все заказы, дедлайн которых прошел, меняет статус ответственных курьеров на 'available'
+// UnassignAllCompleted завершает все заказы, дедлайн которых прошел, меняет статус ответственных курьеров на 'available'
 // возвращает количество завершенных заказов.
-func (ds *deliveryService) UnassignAllCompletedDeliveries(ctx context.Context) (int, error) {
+func (ds *deliveryService) UnassignAllCompleted(ctx context.Context) (int, error) {
 	var totalUnassigned int
 	err := ds.tm.Begin(ctx, func(ctx context.Context) error {
 		completedDeliveries, err := ds.delRepo.GetAllCompleted(ctx)
@@ -138,4 +138,36 @@ func (ds *deliveryService) UnassignAllCompletedDeliveries(ctx context.Context) (
 		return 0, adapters.ErrUnwrapRepoToService(err)
 	}
 	return totalUnassigned, nil
+}
+
+// Complete завершает заказ. Освобождает курьера, но не удаляет заказ из таблицы delivery
+func (ds *deliveryService) Complete(ctx context.Context, req *dto.CompleteDeliveryRequest) (*dto.CompleteDeliveryResponse, error) {
+	var res *dto.CompleteDeliveryResponse
+	err := ds.tm.Begin(ctx, func(ctx context.Context) error {
+		delivery, err := ds.delRepo.GetByOrderId(ctx, req.OrderId)
+		if err != nil {
+			return err
+		}
+
+		courier := model.Courier{
+			Id:     delivery.CourierId,
+			Status: model.StatusAvailable,
+		}
+
+		err = ds.courRepo.Update(ctx, courier)
+		if err != nil {
+			return err
+		}
+
+		res = &dto.CompleteDeliveryResponse{
+			OrderId:   req.OrderId,
+			Status:    model.StatusCompleted,
+			CourierId: courier.Id,
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, adapters.ErrUnwrapRepoToService(err)
+	}
+	return res, nil
 }

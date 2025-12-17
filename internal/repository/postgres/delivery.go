@@ -7,8 +7,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"service-order-avito/internal/domain"
 	"service-order-avito/internal/domain/errors/repository"
+	"service-order-avito/internal/domain/model"
 	"time"
 )
 
@@ -20,7 +20,7 @@ func NewDeliveryRepositoryPostgres(pool *pgxpool.Pool) *deliveryRepositoryPostgr
 	return &deliveryRepositoryPostgres{pool: pool}
 }
 
-func (d *deliveryRepositoryPostgres) Create(ctx context.Context, delivery domain.Delivery) (int, error) {
+func (d *deliveryRepositoryPostgres) Create(ctx context.Context, delivery model.Delivery) (int, error) {
 	sql := `
         INSERT INTO delivery (courier_id, order_id, assigned_at, deadline)
         VALUES ($1, $2, $3, $4)
@@ -50,14 +50,14 @@ func (d *deliveryRepositoryPostgres) Create(ctx context.Context, delivery domain
 	return id, err
 }
 
-func (c *deliveryRepositoryPostgres) GetByOrderId(ctx context.Context, orderId string) (domain.Delivery, error) {
+func (c *deliveryRepositoryPostgres) GetByOrderId(ctx context.Context, orderId string) (model.Delivery, error) {
 	sql := `
         SELECT id, courier_id, order_id, assigned_at, deadline
         FROM delivery
         WHERE order_id=$1
     `
 
-	var delivery domain.Delivery
+	var delivery model.Delivery
 	var err error
 
 	if tx := GetTx(ctx); tx != nil { // с транзакцией
@@ -81,15 +81,15 @@ func (c *deliveryRepositoryPostgres) GetByOrderId(ctx context.Context, orderId s
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 
-			return domain.Delivery{}, repository.ErrDeliveryNotFound
+			return model.Delivery{}, repository.ErrDeliveryNotFound
 		}
-		return domain.Delivery{}, repository.ErrInternalError
+		return model.Delivery{}, repository.ErrInternalError
 	}
 
 	return delivery, err
 }
 
-func (c *deliveryRepositoryPostgres) GetAllCompleted(ctx context.Context) ([]domain.Delivery, error) {
+func (c *deliveryRepositoryPostgres) GetAllCompleted(ctx context.Context) ([]model.Delivery, error) {
 	sql := `
         SELECT id, courier_id, order_id, assigned_at, deadline
         FROM delivery
@@ -110,9 +110,9 @@ func (c *deliveryRepositoryPostgres) GetAllCompleted(ctx context.Context) ([]dom
 	}
 	defer rows.Close()
 
-	var deliveries []domain.Delivery
+	var deliveries []model.Delivery
 	for rows.Next() {
-		var delivery domain.Delivery
+		var delivery model.Delivery
 		err = rows.Scan(
 			&delivery.Id,
 			&delivery.CourierId,

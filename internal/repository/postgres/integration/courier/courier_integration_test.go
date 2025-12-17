@@ -4,21 +4,21 @@ import (
 	"context"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/suite"
-	"service-order-avito/internal/domain"
 	"service-order-avito/internal/domain/errors/repository"
+	"service-order-avito/internal/domain/model"
 	"service-order-avito/internal/repository/postgres"
 	"testing"
 	"time"
 )
 
 type CourierRepository interface {
-	Create(context.Context, domain.Courier) (int, error)
-	GetById(context.Context, int) (domain.Courier, error)
-	GetAll(context.Context) ([]domain.Courier, error)
-	Update(context.Context, domain.Courier) error
+	Create(context.Context, model.Courier) (int, error)
+	GetById(context.Context, int) (model.Courier, error)
+	GetAll(context.Context) ([]model.Courier, error)
+	Update(context.Context, model.Courier) error
 	UpdateStatusManyById(context.Context, ...int) error
 	DeleteById(context.Context, int) error
-	GetAvailable(context.Context) (domain.Courier, error)
+	GetAvailable(context.Context) (model.Courier, error)
 }
 
 type CourierRepositoryTestSuite struct {
@@ -59,7 +59,7 @@ func (s *CourierRepositoryTestSuite) TearDownSuite() {
 }
 
 func (s *CourierRepositoryTestSuite) TestCreateCourier_Success() {
-	c := domain.Courier{
+	c := model.Courier{
 		Name:          "Иван Иванов",
 		Phone:         "+79991112233",
 		Status:        "available",
@@ -80,7 +80,7 @@ func (s *CourierRepositoryTestSuite) TestCreateCourier_Success() {
 }
 
 func (s *CourierRepositoryTestSuite) TestCreateCourier_DuplicatePhone() {
-	c := domain.Courier{
+	c := model.Courier{
 		Name:          "Пётр Петров",
 		Phone:         "+78885556677",
 		Status:        "available",
@@ -97,7 +97,7 @@ func (s *CourierRepositoryTestSuite) TestCreateCourier_DuplicatePhone() {
 }
 
 func (s *CourierRepositoryTestSuite) TestGetById_Success() {
-	c := domain.Courier{
+	c := model.Courier{
 		Name:          "Тест Тестович",
 		Phone:         "+70000000001",
 		Status:        "busy",
@@ -130,13 +130,13 @@ func (s *CourierRepositoryTestSuite) TestGetAll_Success() {
 	_, err := s.pool.Exec(s.ctx, "DELETE FROM couriers")
 	s.Require().NoError(err)
 
-	c1 := domain.Courier{
+	c1 := model.Courier{
 		Name:          "A1",
 		Phone:         "+71111111111",
 		Status:        "available",
 		TransportType: "on_foot",
 	}
-	c2 := domain.Courier{
+	c2 := model.Courier{
 		Name:          "A2",
 		Phone:         "+72222222222",
 		Status:        "busy",
@@ -172,7 +172,7 @@ func (s *CourierRepositoryTestSuite) TestGetAvailable_Success() {
 	s.Require().NoError(err)
 
 	// Недоступный курьер
-	c1 := domain.Courier{
+	c1 := model.Courier{
 		Name:            "Busy",
 		Phone:           "+70000000002",
 		Status:          "busy",
@@ -180,14 +180,14 @@ func (s *CourierRepositoryTestSuite) TestGetAvailable_Success() {
 		TotalDeliveries: 10,
 	}
 
-	c2 := domain.Courier{
+	c2 := model.Courier{
 		Name:            "Available1",
 		Phone:           "+70000000003",
 		Status:          "available",
 		TransportType:   "on_foot",
 		TotalDeliveries: 5,
 	}
-	c3 := domain.Courier{
+	c3 := model.Courier{
 		Name:            "Available2",
 		Phone:           "+70000000004",
 		Status:          "available",
@@ -222,7 +222,7 @@ func (s *CourierRepositoryTestSuite) TestGetAvailable_NotFound() {
 	_, err := s.pool.Exec(s.ctx, "DELETE FROM couriers")
 	s.Require().NoError(err)
 
-	c := domain.Courier{
+	c := model.Courier{
 		Name:          "BusyBusy",
 		Phone:         "+78888888888",
 		Status:        "busy",
@@ -241,7 +241,7 @@ func (s *CourierRepositoryTestSuite) TestUpdate_Success() {
 	_, err := s.pool.Exec(s.ctx, "DELETE FROM couriers")
 	s.Require().NoError(err)
 
-	c := domain.Courier{
+	c := model.Courier{
 		Name:          "Old",
 		Phone:         "+75555555555",
 		Status:        "busy",
@@ -250,7 +250,7 @@ func (s *CourierRepositoryTestSuite) TestUpdate_Success() {
 	id, err := s.repo.Create(s.ctx, c)
 	s.Require().NoError(err)
 
-	update := domain.Courier{
+	update := model.Courier{
 		Id:              id,
 		Name:            "NewName",
 		Status:          "available",
@@ -260,7 +260,7 @@ func (s *CourierRepositoryTestSuite) TestUpdate_Success() {
 	err = s.repo.Update(s.ctx, update)
 	s.Require().NoError(err)
 
-	var got domain.Courier
+	var got model.Courier
 	err = s.pool.QueryRow(s.ctx,
 		`SELECT name, status, total_deliveries FROM couriers WHERE id=$1`, id,
 	).Scan(&got.Name, &got.Status, &got.TotalDeliveries)
@@ -275,7 +275,7 @@ func (s *CourierRepositoryTestSuite) TestUpdate_NotFound() {
 	_, err := s.pool.Exec(s.ctx, "DELETE FROM couriers")
 	s.Require().NoError(err)
 
-	update := domain.Courier{
+	update := model.Courier{
 		Id:     999999,
 		Name:   "New",
 		Status: "available",
@@ -291,7 +291,7 @@ func (s *CourierRepositoryTestSuite) TestUpdate_DuplicatePhone() {
 	s.Require().NoError(err)
 
 	// Создаём двух курьеров
-	id1, err := s.repo.Create(s.ctx, domain.Courier{
+	id1, err := s.repo.Create(s.ctx, model.Courier{
 		Name:          "A",
 		Phone:         "+71111111111",
 		Status:        "available",
@@ -299,7 +299,7 @@ func (s *CourierRepositoryTestSuite) TestUpdate_DuplicatePhone() {
 	})
 	s.Require().NoError(err)
 
-	_, err = s.repo.Create(s.ctx, domain.Courier{
+	_, err = s.repo.Create(s.ctx, model.Courier{
 		Name:          "B",
 		Phone:         "+72222222222",
 		Status:        "busy",
@@ -307,7 +307,7 @@ func (s *CourierRepositoryTestSuite) TestUpdate_DuplicatePhone() {
 	})
 	s.Require().NoError(err)
 
-	err = s.repo.Update(s.ctx, domain.Courier{
+	err = s.repo.Update(s.ctx, model.Courier{
 		Id:    id1,
 		Phone: "+72222222222",
 	})
@@ -320,13 +320,13 @@ func (s *CourierRepositoryTestSuite) TestUpdateStatusManyById_Success() {
 	_, err := s.pool.Exec(s.ctx, "DELETE FROM couriers")
 	s.Require().NoError(err)
 
-	id1, _ := s.repo.Create(s.ctx, domain.Courier{
+	id1, _ := s.repo.Create(s.ctx, model.Courier{
 		Name: "X1", Phone: "+70000000010", Status: "busy", TransportType: "car",
 	})
-	id2, _ := s.repo.Create(s.ctx, domain.Courier{
+	id2, _ := s.repo.Create(s.ctx, model.Courier{
 		Name: "X2", Phone: "+70000000011", Status: "busy", TransportType: "car",
 	})
-	_, _ = s.repo.Create(s.ctx, domain.Courier{
+	_, _ = s.repo.Create(s.ctx, model.Courier{
 		Name: "X3", Phone: "+70000000012", Status: "busy", TransportType: "car",
 	})
 
@@ -361,7 +361,7 @@ func (s *CourierRepositoryTestSuite) TestDeleteById_Success() {
 	_, err := s.pool.Exec(s.ctx, "DELETE FROM couriers")
 	s.Require().NoError(err)
 
-	id, err := s.repo.Create(s.ctx, domain.Courier{
+	id, err := s.repo.Create(s.ctx, model.Courier{
 		Name:          "DelTest",
 		Phone:         "+73333333333",
 		Status:        "available",

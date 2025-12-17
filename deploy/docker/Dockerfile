@@ -9,6 +9,7 @@ COPY pkg ./pkg
 COPY internal ./internal/
 COPY cmd ./cmd/
 COPY api ./api/
+COPY infrastructure ./infrastructure/
 
 RUN go build -v -o courier-service ./cmd/main.go
 

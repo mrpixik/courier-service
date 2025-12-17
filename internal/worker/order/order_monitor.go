@@ -8,7 +8,7 @@ import (
 )
 
 type deliveryService interface {
-	AssignDelivery(context.Context, *dto.AssignDeliveryRequest) (*dto.AssignDeliveryResponse, error)
+	Assign(context.Context, *dto.AssignDeliveryRequest) (*dto.AssignDeliveryResponse, error)
 }
 
 type orderServiceRPCClient interface {
@@ -49,7 +49,7 @@ func (w *orderMonitorWorker) Start(ctx context.Context) {
 			}
 
 			for _, orderId := range orderIds {
-				req, err := w.delService.AssignDelivery(
+				req, err := w.delService.Assign(
 					ctx,
 					&dto.AssignDeliveryRequest{OrderId: orderId},
 				)

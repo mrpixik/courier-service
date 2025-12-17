@@ -7,7 +7,7 @@ package mock_dep
 import (
 	context "context"
 	reflect "reflect"
-	domain "service-order-avito/internal/domain"
+	"service-order-avito/internal/domain/model"
 	time "time"
 
 	gomock "github.com/golang/mock/gomock"
@@ -74,7 +74,7 @@ func (m *MockCourierRepository) EXPECT() *MockCourierRepositoryMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockCourierRepository) Create(arg0 context.Context, arg1 domain.Courier) (int, error) {
+func (m *MockCourierRepository) Create(arg0 context.Context, arg1 model.Courier) (int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", arg0, arg1)
 	ret0, _ := ret[0].(int)
@@ -103,10 +103,10 @@ func (mr *MockCourierRepositoryMockRecorder) DeleteById(arg0, arg1 interface{}) 
 }
 
 // GetAll mocks base method.
-func (m *MockCourierRepository) GetAll(arg0 context.Context) ([]domain.Courier, error) {
+func (m *MockCourierRepository) GetAll(arg0 context.Context) ([]model.Courier, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAll", arg0)
-	ret0, _ := ret[0].([]domain.Courier)
+	ret0, _ := ret[0].([]model.Courier)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -118,10 +118,10 @@ func (mr *MockCourierRepositoryMockRecorder) GetAll(arg0 interface{}) *gomock.Ca
 }
 
 // GetAvailable mocks base method.
-func (m *MockCourierRepository) GetAvailable(arg0 context.Context) (domain.Courier, error) {
+func (m *MockCourierRepository) GetAvailable(arg0 context.Context) (model.Courier, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAvailable", arg0)
-	ret0, _ := ret[0].(domain.Courier)
+	ret0, _ := ret[0].(model.Courier)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -133,10 +133,10 @@ func (mr *MockCourierRepositoryMockRecorder) GetAvailable(arg0 interface{}) *gom
 }
 
 // GetById mocks base method.
-func (m *MockCourierRepository) GetById(arg0 context.Context, arg1 int) (domain.Courier, error) {
+func (m *MockCourierRepository) GetById(arg0 context.Context, arg1 int) (model.Courier, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetById", arg0, arg1)
-	ret0, _ := ret[0].(domain.Courier)
+	ret0, _ := ret[0].(model.Courier)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -148,7 +148,7 @@ func (mr *MockCourierRepositoryMockRecorder) GetById(arg0, arg1 interface{}) *go
 }
 
 // Update mocks base method.
-func (m *MockCourierRepository) Update(arg0 context.Context, arg1 domain.Courier) error {
+func (m *MockCourierRepository) Update(arg0 context.Context, arg1 model.Courier) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -204,7 +204,7 @@ func (m *MockDeliveryRepository) EXPECT() *MockDeliveryRepositoryMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockDeliveryRepository) Create(arg0 context.Context, arg1 domain.Delivery) (int, error) {
+func (m *MockDeliveryRepository) Create(arg0 context.Context, arg1 model.Delivery) (int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", arg0, arg1)
 	ret0, _ := ret[0].(int)
@@ -252,10 +252,10 @@ func (mr *MockDeliveryRepositoryMockRecorder) DeleteManyById(arg0 interface{}, a
 }
 
 // GetAllCompleted mocks base method.
-func (m *MockDeliveryRepository) GetAllCompleted(arg0 context.Context) ([]domain.Delivery, error) {
+func (m *MockDeliveryRepository) GetAllCompleted(arg0 context.Context) ([]model.Delivery, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllCompleted", arg0)
-	ret0, _ := ret[0].([]domain.Delivery)
+	ret0, _ := ret[0].([]model.Delivery)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -267,10 +267,10 @@ func (mr *MockDeliveryRepositoryMockRecorder) GetAllCompleted(arg0 interface{}) 
 }
 
 // GetByOrderId mocks base method.
-func (m *MockDeliveryRepository) GetByOrderId(arg0 context.Context, arg1 string) (domain.Delivery, error) {
+func (m *MockDeliveryRepository) GetByOrderId(arg0 context.Context, arg1 string) (model.Delivery, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByOrderId", arg0, arg1)
-	ret0, _ := ret[0].(domain.Delivery)
+	ret0, _ := ret[0].(model.Delivery)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

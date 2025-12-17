@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"net/http"
 	"service-order-avito/internal/config"
-	"service-order-avito/internal/http/middleware"
-	"service-order-avito/internal/http/server/handlers"
+	"service-order-avito/internal/handler/http/middleware"
+	"service-order-avito/internal/handler/http/server/handler"
 )
 
 type courierHandler interface {
@@ -29,8 +29,8 @@ func InitRouter(cfg config.HTTPServer, log *slog.Logger, courierHandler courierH
 		middleware.WithLogger(log),
 	)
 
-	router.Get("/ping", handlers.PingGetHandler)
-	router.Head("/healthcheck", handlers.HealthcheckHeadHandler)
+	router.Get("/ping", handler.PingGetHandler)
+	router.Head("/healthcheck", handler.HealthcheckHeadHandler)
 
 	router.Get("/couriers", courierHandler.GetAll)
 

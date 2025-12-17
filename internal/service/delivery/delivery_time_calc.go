@@ -1,7 +1,7 @@
 package delivery
 
 import (
-	"service-order-avito/internal/domain"
+	"service-order-avito/internal/domain/model"
 	"time"
 )
 
@@ -19,11 +19,11 @@ func NewDeliveryTimeFactory() *deliveryTimeFactory {
 
 func (dtf *deliveryTimeFactory) Calculate(transportType string) time.Time {
 	switch transportType {
-	case domain.TransportTypeFoot:
+	case model.TransportTypeFoot:
 		return time.Now().Add(footDeliveryTime)
-	case domain.TransportTypeScooter:
+	case model.TransportTypeScooter:
 		return time.Now().Add(scooterDeliveryTime)
-	case domain.TransportTypeCar:
+	case model.TransportTypeCar:
 		return time.Now().Add(carDeliveryTime)
 	default: // такого быть не может
 		return time.Now().Add(footDeliveryTime)

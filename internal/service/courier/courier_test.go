@@ -4,10 +4,10 @@ import (
 	"context"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
-	"service-order-avito/internal/domain"
 	"service-order-avito/internal/domain/dto"
 	"service-order-avito/internal/domain/errors/repository"
 	"service-order-avito/internal/domain/errors/service"
+	"service-order-avito/internal/domain/model"
 	mock_dep "service-order-avito/internal/service/dep/mocks"
 	"testing"
 )
@@ -27,11 +27,11 @@ func TestCourierService_CreateCourier_Success(t *testing.T) {
 	req := &dto.CreateCourierRequest{
 		Name:          "John",
 		Phone:         "+12345678901",
-		Status:        domain.StatusAvailable,
+		Status:        model.StatusAvailable,
 		TransportType: "car",
 	}
 
-	expectedCourier := domain.Courier{
+	expectedCourier := model.Courier{
 		Name:          req.Name,
 		Phone:         req.Phone,
 		Status:        req.Status,
@@ -63,11 +63,11 @@ func TestCourierService_CreateCourier_SuccessUnknownTransportType(t *testing.T) 
 	req := &dto.CreateCourierRequest{
 		Name:          "John",
 		Phone:         "+12345678901",
-		Status:        domain.StatusAvailable,
+		Status:        model.StatusAvailable,
 		TransportType: "balloon",
 	}
 
-	expectedCourier := domain.Courier{
+	expectedCourier := model.Courier{
 		Name:          req.Name,
 		Phone:         req.Phone,
 		Status:        req.Status,
@@ -96,7 +96,7 @@ func TestCourierService_CreateCourier_ValidationErrors(t *testing.T) {
 			req: dto.CreateCourierRequest{
 				Name:          "",
 				Phone:         "+12345678901",
-				Status:        domain.StatusAvailable,
+				Status:        model.StatusAvailable,
 				TransportType: "car",
 			},
 			expectedErr: service.ErrInvalidName,
@@ -106,7 +106,7 @@ func TestCourierService_CreateCourier_ValidationErrors(t *testing.T) {
 			req: dto.CreateCourierRequest{
 				Name:          "John",
 				Phone:         "bad phone",
-				Status:        domain.StatusAvailable,
+				Status:        model.StatusAvailable,
 				TransportType: "car",
 			},
 			expectedErr: service.ErrInvalidPhone,
@@ -158,7 +158,7 @@ func TestCourierService_CreateCourier_CourierExistsError(t *testing.T) {
 	req := &dto.CreateCourierRequest{
 		Name:          "John",
 		Phone:         "+12345678901",
-		Status:        domain.StatusAvailable,
+		Status:        model.StatusAvailable,
 		TransportType: "car",
 	}
 
@@ -185,7 +185,7 @@ func TestCourierService_CreateCourier_InternalError(t *testing.T) {
 	req := &dto.CreateCourierRequest{
 		Name:          "John",
 		Phone:         "+12345678901",
-		Status:        domain.StatusAvailable,
+		Status:        model.StatusAvailable,
 		TransportType: "car",
 	}
 
@@ -217,14 +217,14 @@ func TestCourierService_GetCourier_Success(t *testing.T) {
 		Id:            1,
 		Name:          "John",
 		Phone:         "+12345678901",
-		Status:        domain.StatusAvailable,
+		Status:        model.StatusAvailable,
 		TransportType: "car",
 	}
 
 	mockRepo.
 		EXPECT().
 		GetById(gomock.Any(), 1).
-		Return(domain.Courier{
+		Return(model.Courier{
 			Id:            expectedResponse.Id,
 			Name:          expectedResponse.Name,
 			Phone:         expectedResponse.Phone,
@@ -260,7 +260,7 @@ func TestCourierService_GetCourier_CourierNotFoundError(t *testing.T) {
 	mockRepo.
 		EXPECT().
 		GetById(gomock.Any(), 1).
-		Return(domain.Courier{}, repository.ErrCourierNotFound)
+		Return(model.Courier{}, repository.ErrCourierNotFound)
 
 	_, err := cs.GetCourier(context.Background(), req)
 
@@ -285,7 +285,7 @@ func TestCourierService_GetCourier_InternalError(t *testing.T) {
 	mockRepo.
 		EXPECT().
 		GetById(gomock.Any(), 1).
-		Return(domain.Courier{}, repository.ErrInternalError)
+		Return(model.Courier{}, repository.ErrInternalError)
 
 	_, err := cs.GetCourier(context.Background(), req)
 
@@ -308,31 +308,31 @@ func TestCourierService_GetAllCouriers_Success(t *testing.T) {
 			Id:            1,
 			Name:          "John",
 			Phone:         "+12345678901",
-			Status:        domain.StatusAvailable,
+			Status:        model.StatusAvailable,
 			TransportType: "car",
 		},
 		{
 			Id:            2,
 			Name:          "Martin",
 			Phone:         "+7777777777",
-			Status:        domain.StatusBusy,
+			Status:        model.StatusBusy,
 			TransportType: "helicopter",
 		},
 	}
 
-	mockRes := []domain.Courier{
+	mockRes := []model.Courier{
 		{
 			Id:            1,
 			Name:          "John",
 			Phone:         "+12345678901",
-			Status:        domain.StatusAvailable,
+			Status:        model.StatusAvailable,
 			TransportType: "car",
 		},
 		{
 			Id:            2,
 			Name:          "Martin",
 			Phone:         "+7777777777",
-			Status:        domain.StatusBusy,
+			Status:        model.StatusBusy,
 			TransportType: "helicopter",
 		},
 	}
@@ -390,11 +390,11 @@ func TestCourierService_UpdateCourier_Success(t *testing.T) {
 		Id:            1,
 		Name:          "John",
 		Phone:         "+12345678901",
-		Status:        domain.StatusAvailable,
+		Status:        model.StatusAvailable,
 		TransportType: "car",
 	}
 
-	expectedCourier := domain.Courier{
+	expectedCourier := model.Courier{
 		Id:            req.Id,
 		Name:          req.Name,
 		Phone:         req.Phone,
@@ -422,7 +422,7 @@ func TestCourierService_UpdateCourier_ValidationErrors(t *testing.T) {
 			req: dto.UpdateCourierRequest{
 				Name:          "s1mple",
 				Phone:         "+12345678901",
-				Status:        domain.StatusAvailable,
+				Status:        model.StatusAvailable,
 				TransportType: "car",
 			},
 			expectedErr: service.ErrInvalidName,
@@ -432,7 +432,7 @@ func TestCourierService_UpdateCourier_ValidationErrors(t *testing.T) {
 			req: dto.UpdateCourierRequest{
 				Name:          "John",
 				Phone:         "bad phone",
-				Status:        domain.StatusAvailable,
+				Status:        model.StatusAvailable,
 				TransportType: "car",
 			},
 			expectedErr: service.ErrInvalidPhone,
@@ -452,7 +452,7 @@ func TestCourierService_UpdateCourier_ValidationErrors(t *testing.T) {
 			req: dto.UpdateCourierRequest{
 				Name:          "John",
 				Phone:         "+12345678901",
-				Status:        domain.StatusAvailable,
+				Status:        model.StatusAvailable,
 				TransportType: "batmobile",
 			},
 			expectedErr: service.ErrInvalidTransportType,
@@ -492,7 +492,7 @@ func TestCourierService_UpdateCourier_RepositoryErrors(t *testing.T) {
 				Id:            1,
 				Name:          "John",
 				Phone:         "+12345678901",
-				Status:        domain.StatusAvailable,
+				Status:        model.StatusAvailable,
 				TransportType: "car",
 			},
 			repoErr:     repository.ErrCourierNotFound,
@@ -504,7 +504,7 @@ func TestCourierService_UpdateCourier_RepositoryErrors(t *testing.T) {
 				Id:            1,
 				Name:          "John",
 				Phone:         "+12345678901",
-				Status:        domain.StatusAvailable,
+				Status:        model.StatusAvailable,
 				TransportType: "car",
 			},
 			repoErr:     repository.ErrInternalError,
@@ -522,7 +522,7 @@ func TestCourierService_UpdateCourier_RepositoryErrors(t *testing.T) {
 
 			cs := NewCourierService(mockTM, mockRepo)
 
-			expectedCourier := domain.Courier{
+			expectedCourier := model.Courier{
 				Id:            tt.req.Id,
 				Name:          tt.req.Name,
 				Phone:         tt.req.Phone,

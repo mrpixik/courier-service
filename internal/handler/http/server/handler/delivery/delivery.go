@@ -9,10 +9,10 @@ import (
 	"service-order-avito/internal/domain/errors/server"
 )
 
-// mockgen -source="internal/http/server/handlers/delivery/delivery.go" -destination="internal/http/server/handlers/delivery/mocks/mock_delivery_service.go"
+// mockgen -source="internal/http/server/handler/delivery/delivery.go" -destination="internal/http/server/handler/delivery/mocks/mock_delivery_service.go"
 type deliveryService interface {
-	AssignDelivery(context.Context, *dto.AssignDeliveryRequest) (*dto.AssignDeliveryResponse, error)
-	UnassignDelivery(context.Context, *dto.UnassignDeliveryRequest) (*dto.UnassignDeliveryResponse, error)
+	Assign(context.Context, *dto.AssignDeliveryRequest) (*dto.AssignDeliveryResponse, error)
+	Unassign(context.Context, *dto.UnassignDeliveryRequest) (*dto.UnassignDeliveryResponse, error)
 }
 
 type deliveryHandler struct {
@@ -29,7 +29,7 @@ func (dh *deliveryHandler) PostAssign(w http.ResponseWriter, r *http.Request) {
 		adapters.WriteError(w, server.ErrInvalidJSON, http.StatusBadRequest)
 		return
 	}
-	res, err := dh.service.AssignDelivery(r.Context(), &req)
+	res, err := dh.service.Assign(r.Context(), &req)
 	if err != nil {
 		adapters.WriteServiceError(w, err)
 		return
@@ -46,7 +46,7 @@ func (dh *deliveryHandler) PostUnassign(w http.ResponseWriter, r *http.Request) 
 		adapters.WriteError(w, server.ErrInvalidJSON, http.StatusBadRequest)
 		return
 	}
-	res, err := dh.service.UnassignDelivery(r.Context(), &req)
+	res, err := dh.service.Unassign(r.Context(), &req)
 	if err != nil {
 		adapters.WriteServiceError(w, err)
 		return

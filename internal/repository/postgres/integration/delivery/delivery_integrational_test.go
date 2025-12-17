@@ -4,17 +4,17 @@ import (
 	"context"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/suite"
-	"service-order-avito/internal/domain"
 	"service-order-avito/internal/domain/errors/repository"
+	"service-order-avito/internal/domain/model"
 	"service-order-avito/internal/repository/postgres"
 	"testing"
 	"time"
 )
 
 type DeliveryRepository interface {
-	Create(context.Context, domain.Delivery) (int, error)
-	GetByOrderId(context.Context, string) (domain.Delivery, error)
-	GetAllCompleted(context.Context) ([]domain.Delivery, error)
+	Create(context.Context, model.Delivery) (int, error)
+	GetByOrderId(context.Context, string) (model.Delivery, error)
+	GetAllCompleted(context.Context) ([]model.Delivery, error)
 	DeleteByOrderId(context.Context, string) error
 	DeleteManyById(context.Context, ...int) error
 }
@@ -62,7 +62,7 @@ func (s *DeliveryRepositoryTestSuite) TestCreate_Success() {
     `)
 	s.Require().NoError(err)
 
-	delivery := domain.Delivery{
+	delivery := model.Delivery{
 		CourierId:  1,
 		OrderId:    "order-1",
 		AssignedAt: time.Now(),
@@ -92,7 +92,7 @@ func (s *DeliveryRepositoryTestSuite) TestCreate_DuplicateOrderId() {
     `)
 	s.Require().NoError(err)
 
-	delivery := domain.Delivery{
+	delivery := model.Delivery{
 		CourierId:  2,
 		OrderId:    "duplicate-order",
 		AssignedAt: time.Now(),
@@ -109,7 +109,7 @@ func (s *DeliveryRepositoryTestSuite) TestCreate_DuplicateOrderId() {
 }
 
 func (s *DeliveryRepositoryTestSuite) TestCreate_InvalidCourierId() {
-	delivery := domain.Delivery{
+	delivery := model.Delivery{
 		CourierId:  9999,
 		OrderId:    "invalid-fk-order",
 		AssignedAt: time.Now(),

@@ -2,7 +2,7 @@ package courier
 
 import (
 	"regexp"
-	"service-order-avito/internal/domain"
+	"service-order-avito/internal/domain/model"
 	"unicode"
 )
 
@@ -29,14 +29,14 @@ func IsValidPhone(phone string) bool {
 }
 
 func IsValidStatus(status string) bool {
-	if status == domain.StatusAvailable || status == domain.StatusBusy || status == domain.StatusPaused {
+	if status == model.StatusAvailable || status == model.StatusBusy || status == model.StatusPaused {
 		return true
 	}
 	return false
 }
 
 func IsValidTransportType(transportType string) bool {
-	if transportType == domain.TransportTypeFoot || transportType == domain.TransportTypeScooter || transportType == domain.TransportTypeCar {
+	if transportType == model.TransportTypeFoot || transportType == model.TransportTypeScooter || transportType == model.TransportTypeCar {
 		return true
 	}
 	return false

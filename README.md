@@ -22,6 +22,14 @@ TODO:
 4. в ./internal/worker/order реализован воркер, использующий адаптер (3) для RPC в service-order по тикеру
 5. в конфиг добавлена настройка DSN подключения к gRPC серверу service-order
 
+Что сделано (дз8):
+1. новый service в internal/service/queues/order для обработки сообщений, получаемых через брокер (кафку)
+2. сервис реализован с помощью 2х ПП: Fabric + Strategy
+3. новый handler в internal/handler/queues/order для обработки сообщений
+4. написан (скопирован с воркшопа) клиент для кафки в infrastructure/kafka/client
+5. новый worker для фоновой обработки сообщений internal/worker/queues/kafka
+6. все настраивается через конфиг, worker поддерживает graceful shutdown
+
 
 чтобы запустить unit тесты
 ```bash

@@ -3,28 +3,26 @@ package main
 import (
 	"context"
 	"errors"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"log/slog"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
-	"service-order-avito/api/order"
+	client2 "service-order-avito/infrastructure/kafka/client"
 	"service-order-avito/internal/config"
-	order2 "service-order-avito/internal/gateway/order"
-	"service-order-avito/internal/http/server"
-	courier2 "service-order-avito/internal/http/server/handlers/courier"
-	delivery2 "service-order-avito/internal/http/server/handlers/delivery"
+	"service-order-avito/internal/handler/http/server"
+	courier2 "service-order-avito/internal/handler/http/server/handler/courier"
+	delivery2 "service-order-avito/internal/handler/http/server/handler/delivery"
+	order4 "service-order-avito/internal/handler/queues/order"
 	"service-order-avito/internal/repository/postgres"
 	"service-order-avito/internal/service/courier"
 	"service-order-avito/internal/service/delivery"
+	order3 "service-order-avito/internal/service/queues/order"
 	delivery_worker "service-order-avito/internal/worker/delivery"
-	order_worker "service-order-avito/internal/worker/order"
+	"service-order-avito/internal/worker/queues/kafka"
 	"service-order-avito/pkg/logger"
 	"syscall"
-	"time"
 )
 
 func main() {
@@ -54,6 +52,13 @@ func main() {
 		log.Info("connection with database closed")
 	}()
 
+	// Kafka connection
+	kafkaClient, err := client2.NewOrderKafkaClient(cfg.Kafka.ClientDSN)
+	if err != nil {
+		log.Error("init kafka order-change consumer")
+		os.Exit(1)
+	}
+
 	// Repository Lay
 	transactionManager := postgres.NewTransactionManagerPostgres(pool)
 	courierRepository := postgres.NewCourierRepositoryPostgres(pool)
@@ -63,29 +68,43 @@ func main() {
 	// Service lay
 	courierService := courier.NewCourierService(transactionManager, courierRepository)
 	deliveryService := delivery.NewDeliveryService(transactionManager, courierRepository, deliveryRepository)
+	orderChangedService := order3.NewOrderChangedService(deliveryService)
 	log.Info("service lay is initialized")
 
 	// Workers
+	// monitor worker
 	deliveryMonitorWorker := delivery_worker.NewDeliveryMonitorWorker(cfg.DeliveryWorkerTickInterval, log, deliveryService)
 	go deliveryMonitorWorker.Start(ctxApp)
 	log.Info("delivery monitor worker is started")
 
-	connRPC, err := grpc.NewClient(cfg.GRPC.OrderServiceDSN, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Error("unable to connect to order-service")
-		os.Exit(1)
-	}
-	orderServiceClient := order.NewOrdersServiceClient(connRPC)
-	orderGateway := order2.NewOrderGateway(orderServiceClient)
+	//dz 7 depreciated
+	//connRPC, err := grpc.NewClient(cfg.GRPC.OrderServiceDSN, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	//if err != nil {
+	//	log.Error("unable to connect to order-service")
+	//	os.Exit(1)
+	//}
+	//orderServiceClient := order.NewOrdersServiceClient(connRPC)
+	//orderGateway := order2.NewOrderGateway(orderServiceClient)
+	//
+	//orderServiceMonitorWorker := order_worker.NewOrderMonitorWorker(
+	//	time.Second*5,
+	//	log,
+	//	deliveryService,
+	//	orderGateway,
+	//)
+	//go orderServiceMonitorWorker.Start(ctxApp)
+	//log.Info("order-service monitor worker is started")
 
-	orderServiceMonitorWorker := order_worker.NewOrderMonitorWorker(
-		time.Second*5,
+	// kafka order-changed consumer
+	handler := order4.NewOrderChangedHandler(log, orderChangedService)
+	orderConsumerWorker := kafka.NewOrderConsumerWorker(
 		log,
-		deliveryService,
-		orderGateway,
+		kafkaClient,
+		handler,
+		cfg.Kafka.TopicName,
 	)
-	go orderServiceMonitorWorker.Start(ctxApp)
-	log.Info("order-service monitor worker is started")
+	go orderConsumerWorker.Start(ctxApp)
+	log.Info("kafka order-changed consumer worker is started")
 
 	// Controller lay
 	courierHandler := courier2.NewCourierHandler(courierService)

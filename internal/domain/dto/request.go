@@ -27,12 +27,17 @@ type DeleteCourierRequest struct {
 	Id int `json:"id"`
 }
 
-// AssignDeliveryRequest запрос на назначение заказа
+// AssignDeliveryRequest запрос на назначение доставки
 type AssignDeliveryRequest struct {
 	OrderId string `json:"order_id"`
 }
 
-// UnassignDeliveryRequest запрос на завершение заказа
+// UnassignDeliveryRequest запрос на завершение доставки
 type UnassignDeliveryRequest struct {
+	OrderId string `json:"order_id"`
+}
+
+// CompleteDeliveryRequest запрос на завершение доставки (без удаления из таблицы)
+type CompleteDeliveryRequest struct {
 	OrderId string `json:"order_id"`
 }

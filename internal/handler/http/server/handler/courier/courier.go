@@ -11,7 +11,7 @@ import (
 	"strconv"
 )
 
-// mockgen -source="internal/http/server/handlers/courier/courier.go" -destination="internal/http/server/handlers/courier/mocks/mock_courier_service.go"
+// mockgen -source="internal/http/server/handler/courier/courier.go" -destination="internal/http/server/handler/courier/mocks/mock_courier_service.go"
 type сourierService interface {
 	CreateCourier(context.Context, *dto.CreateCourierRequest) (*dto.CreateCourierResponse, error)
 	GetCourier(context.Context, *dto.GetCourierRequest) (*dto.GetCourierResponse, error)

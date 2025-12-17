@@ -8,7 +8,7 @@ import (
 )
 
 type deliveryService interface {
-	UnassignAllCompletedDeliveries(context.Context) (int, error)
+	UnassignAllCompleted(context.Context) (int, error)
 }
 
 type deliveryMonitorWorker struct {
@@ -30,7 +30,7 @@ func (w *deliveryMonitorWorker) Start(ctx context.Context) {
 			w.log.Info("delivery monitor worker gracefully stopped")
 			return
 		case <-ticker.C:
-			totalUnassigned, err := w.delService.UnassignAllCompletedDeliveries(ctx)
+			totalUnassigned, err := w.delService.UnassignAllCompleted(ctx)
 			if err != nil {
 				w.log.Error(err.Error())
 				continue

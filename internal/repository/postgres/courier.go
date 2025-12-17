@@ -7,8 +7,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"service-order-avito/internal/domain"
 	"service-order-avito/internal/domain/errors/repository"
+	"service-order-avito/internal/domain/model"
 	"strings"
 	"time"
 )
@@ -22,7 +22,7 @@ func NewCourierRepositoryPostgres(pool *pgxpool.Pool) *courierRepositoryPostgres
 }
 
 // Create создает нового курьера в табличке (с полем транспорт).
-func (c *courierRepositoryPostgres) Create(ctx context.Context, courier domain.Courier) (int, error) {
+func (c *courierRepositoryPostgres) Create(ctx context.Context, courier model.Courier) (int, error) {
 	sql := `
         INSERT INTO couriers (name, phone, status, transport_type)
         VALUES ($1, $2, $3, $4)
@@ -50,14 +50,14 @@ func (c *courierRepositoryPostgres) Create(ctx context.Context, courier domain.C
 	return id, err
 }
 
-func (c *courierRepositoryPostgres) GetById(ctx context.Context, id int) (domain.Courier, error) {
+func (c *courierRepositoryPostgres) GetById(ctx context.Context, id int) (model.Courier, error) {
 	sql := `
         SELECT name, phone, status, transport_type, created_at, updated_at
         FROM couriers
         WHERE id=$1
     `
 
-	var courier domain.Courier
+	var courier model.Courier
 	var err error
 
 	if tx := GetTx(ctx); tx != nil { // с транзакцией
@@ -83,15 +83,15 @@ func (c *courierRepositoryPostgres) GetById(ctx context.Context, id int) (domain
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 
-			return domain.Courier{}, repository.ErrCourierNotFound
+			return model.Courier{}, repository.ErrCourierNotFound
 		}
-		return domain.Courier{}, repository.ErrInternalError
+		return model.Courier{}, repository.ErrInternalError
 	}
 
 	return courier, err
 }
 
-func (c *courierRepositoryPostgres) GetAll(ctx context.Context) ([]domain.Courier, error) {
+func (c *courierRepositoryPostgres) GetAll(ctx context.Context) ([]model.Courier, error) {
 	sql := `
         SELECT id, name, phone, status, transport_type, created_at, updated_at
         FROM couriers
@@ -112,9 +112,9 @@ func (c *courierRepositoryPostgres) GetAll(ctx context.Context) ([]domain.Courie
 	}
 	defer rows.Close()
 
-	var couriers []domain.Courier
+	var couriers []model.Courier
 	for rows.Next() {
-		var courier domain.Courier
+		var courier model.Courier
 		err = rows.Scan(
 			&courier.Id,
 			&courier.Name,
@@ -141,7 +141,7 @@ func (c *courierRepositoryPostgres) GetAll(ctx context.Context) ([]domain.Courie
 
 // GetAvailable решил возвращать полный объект domain.Courier, чтобы сохранить логику геттеров.
 // Мне кажется, не очень понятно было бы возвращать только id и transport_type, тем более структура достаточно легкая
-func (c *courierRepositoryPostgres) GetAvailable(ctx context.Context) (domain.Courier, error) {
+func (c *courierRepositoryPostgres) GetAvailable(ctx context.Context) (model.Courier, error) {
 	sql := `
 		SELECT id, name, phone, status, transport_type, total_deliveries, created_at, updated_at
 		FROM couriers
@@ -150,7 +150,7 @@ func (c *courierRepositoryPostgres) GetAvailable(ctx context.Context) (domain.Co
 		LIMIT 1;
     `
 
-	var courier domain.Courier
+	var courier model.Courier
 	var err error
 
 	if tx := GetTx(ctx); tx != nil { // с транзакцией
@@ -180,15 +180,15 @@ func (c *courierRepositoryPostgres) GetAvailable(ctx context.Context) (domain.Co
 		fmt.Println(err)
 		if errors.Is(err, pgx.ErrNoRows) {
 
-			return domain.Courier{}, repository.ErrNoAvailableCouriers
+			return model.Courier{}, repository.ErrNoAvailableCouriers
 		}
-		return domain.Courier{}, repository.ErrInternalError
+		return model.Courier{}, repository.ErrInternalError
 	}
 
 	return courier, err
 }
 
-func (c *courierRepositoryPostgres) Update(ctx context.Context, courier domain.Courier) error {
+func (c *courierRepositoryPostgres) Update(ctx context.Context, courier model.Courier) error {
 	sqlParts := make([]string, 0)
 	fields := make([]interface{}, 0)
 	fieldIdx := 1

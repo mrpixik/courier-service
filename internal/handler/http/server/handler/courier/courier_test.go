@@ -11,7 +11,7 @@ import (
 	"service-order-avito/internal/domain/dto"
 	"service-order-avito/internal/domain/errors/server"
 	"service-order-avito/internal/domain/errors/service"
-	mock_courier "service-order-avito/internal/http/server/handlers/courier/mocks"
+	"service-order-avito/internal/handler/http/server/handler/courier/mocks"
 	"testing"
 )
 

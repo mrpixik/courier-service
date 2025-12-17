@@ -4,17 +4,18 @@ up_local: # запуск бд и миграций через докер. Сам�
 
 down_local: # остановка контейнеров. чтобы завершить работу сервиса необходимо еще отправить ctr+c в консоль
 	docker compose -f docker-compose.local.yaml stop
-#	docker compose -f infrastructure/docker-compose.yml up -d
-#	docker compose -f service-order/docker-compose.yaml up -d
-#	docker compose -f docker-compose.prod.yaml up -d
 
 up_prod: # запуск всего сервера (подгружается образ с моего dockerHub)
+	docker compose -f infrastructure/kafka/docker-compose.yaml up -d
+	docker compose -f service-order/docker-compose.yaml up -d
 	docker compose -f docker-compose.prod.yaml up -d
 
 down_prod: # остановка всех контейнеров
 	docker compose -f docker-compose.prod.yaml stop service-courier
 	docker compose -f docker-compose.prod.yaml stop migrations
 	docker compose -f docker-compose.prod.yaml stop postgres
+	docker compose -f service-order/docker-compose.yaml down
+	docker compose -f infrastructure/kafka/docker-compose.yaml down
 
 # Тесты
 run_tests:

@@ -2,7 +2,7 @@ package dep
 
 import (
 	"context"
-	"service-order-avito/internal/domain"
+	"service-order-avito/internal/domain/model"
 	"time"
 )
 
@@ -12,19 +12,19 @@ type TransactionManager interface {
 }
 
 type CourierRepository interface {
-	Create(context.Context, domain.Courier) (int, error)
-	GetById(context.Context, int) (domain.Courier, error)
-	GetAll(context.Context) ([]domain.Courier, error)
-	Update(context.Context, domain.Courier) error
+	Create(context.Context, model.Courier) (int, error)
+	GetById(context.Context, int) (model.Courier, error)
+	GetAll(context.Context) ([]model.Courier, error)
+	Update(context.Context, model.Courier) error
 	UpdateStatusManyById(context.Context, ...int) error
 	DeleteById(context.Context, int) error
-	GetAvailable(context.Context) (domain.Courier, error)
+	GetAvailable(context.Context) (model.Courier, error)
 }
 
 type DeliveryRepository interface {
-	Create(context.Context, domain.Delivery) (int, error)
-	GetByOrderId(context.Context, string) (domain.Delivery, error)
-	GetAllCompleted(context.Context) ([]domain.Delivery, error)
+	Create(context.Context, model.Delivery) (int, error)
+	GetByOrderId(context.Context, string) (model.Delivery, error)
+	GetAllCompleted(context.Context) ([]model.Delivery, error)
 	DeleteByOrderId(context.Context, string) error
 	DeleteManyById(context.Context, ...int) error
 }
