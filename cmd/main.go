@@ -15,6 +15,7 @@ import (
 	courier2 "service-order-avito/internal/handler/http/server/handler/courier"
 	delivery2 "service-order-avito/internal/handler/http/server/handler/delivery"
 	order4 "service-order-avito/internal/handler/queues/order"
+	"service-order-avito/internal/observability/metrics/prometheus"
 	"service-order-avito/internal/repository/postgres"
 	"service-order-avito/internal/service/courier"
 	"service-order-avito/internal/service/delivery"
@@ -111,8 +112,11 @@ func main() {
 	deliveryHandler := delivery2.NewDeliveryHandler(deliveryService)
 	log.Info("controller lay is initialized")
 
+	// Prometheus
+	prometheusHTTPObserver := prometheus.NewPrometheusHTTPObserver()
+
 	// ROUTER & SERVER
-	r := server.InitRouter(cfg.HTTP, log, courierHandler, deliveryHandler)
+	r := server.InitRouter(log, courierHandler, deliveryHandler, prometheusHTTPObserver)
 
 	srv := &http.Server{
 		Addr:    ":" + cfg.HTTP.Port,

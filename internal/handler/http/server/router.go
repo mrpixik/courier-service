@@ -2,9 +2,9 @@ package server
 
 import (
 	"github.com/go-chi/chi/v5"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log/slog"
 	"net/http"
-	"service-order-avito/internal/config"
 	"service-order-avito/internal/handler/http/middleware"
 	"service-order-avito/internal/handler/http/server/handler"
 )
@@ -22,12 +22,18 @@ type deliveryHandler interface {
 	PostUnassign(http.ResponseWriter, *http.Request)
 }
 
-func InitRouter(cfg config.HTTPServer, log *slog.Logger, courierHandler courierHandler, deliveryHandler deliveryHandler) chi.Router {
+func InitRouter(log *slog.Logger,
+	courierHandler courierHandler,
+	deliveryHandler deliveryHandler,
+	metricObserver middleware.MetricsObserverHTTP) chi.Router {
+
 	router := chi.NewRouter()
 
 	router.Use(
-		middleware.WithLogger(log),
+		middleware.WithMonitoring(log, metricObserver),
 	)
+
+	router.Handle("/metrics", promhttp.Handler())
 
 	router.Get("/ping", handler.PingGetHandler)
 	router.Head("/healthcheck", handler.HealthcheckHeadHandler)

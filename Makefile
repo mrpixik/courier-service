@@ -7,6 +7,7 @@ down_local: # остановка контейнеров. чтобы заверш
 
 up_prod: # запуск всего сервера (подгружается образ с моего dockerHub)
 	docker compose -f infrastructure/kafka/docker-compose.yaml up -d
+	docker compose -f infrastructure/monitoring/docker-compose.yaml up -d
 	docker compose -f service-order/docker-compose.yaml up -d
 	docker compose -f docker-compose.prod.yaml up -d
 
@@ -15,6 +16,7 @@ down_prod: # остановка всех контейнеров
 	docker compose -f docker-compose.prod.yaml stop migrations
 	docker compose -f docker-compose.prod.yaml stop postgres
 	docker compose -f service-order/docker-compose.yaml down
+	docker compose -f infrastructure/monitoring/docker-compose.yaml down
 	docker compose -f infrastructure/kafka/docker-compose.yaml down
 
 # Тесты

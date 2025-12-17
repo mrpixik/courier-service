@@ -1,16 +1,5 @@
 # Сервис курьеров (Avito course)
 
-Существует 2 способа запуска приложения:
-// refactor
-1. Локально: через docker-compose.local.yaml. Через докер подтягивается бд и миграции, а сервис запускается локально через make
-```bash
-make up_local
-```
-
-1. Локально, но по-другому: через docker-compose.prod.yaml. Все то же самое, сам сервис подтягивается с моего DockerHub.
-```bash
-make up_prod
-```
 
 TODO:
 1. Использовать Strings.Builder при динамическом создании запроса
@@ -30,7 +19,16 @@ TODO:
 5. новый worker для фоновой обработки сообщений internal/worker/queues/kafka
 6. все настраивается через конфиг, worker поддерживает graceful shutdown
 
+Что сделано (дз9):
+1. новый http observer, собирающий метрики через prometheus в internal/observability/metrics/prometheus
+2. подключается к middleware в internal/handler/http/middleware
+3. контейнер с prometheus и grafana поднимается в докер компоуз в infrastructure/monitoring
 
+чтобы запустить сервис со всеми зависимостями (нужно, чтобы в корневой дирректории проекта лежал service-order)
+его попросили не пушить в гитхаб, поэтому нужно скопировать его туда отдельно.
+```bash
+make up_prod
+```
 чтобы запустить unit тесты
 ```bash
 make run_tests
@@ -44,4 +42,3 @@ make run_tests_with_coverage
 ```bash
 make run_test_integration
 ```
-тут поднимается тестовая бд, выполняются тесты и потом удаляется volume.
