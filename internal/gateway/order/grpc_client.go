@@ -36,5 +36,16 @@ func (og *orderGateway) GetOrderIdsFrom(ctx context.Context, from time.Time) ([]
 	}
 
 	return orderIds, err
+}
 
+func (og *orderGateway) GetOrderStatusById(ctx context.Context, id string) (string, error) {
+	resp, err := og.client.GetOrderById(
+		ctx,
+		&order.GetOrderByIdRequest{Id: id},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return resp.Order.GetStatus(), nil
 }

@@ -5,26 +5,27 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/IBM/sarama"
+	"service-order-avito/internal/adapters/logger"
 	"service-order-avito/internal/domain/dto/kafka/order"
 	"service-order-avito/internal/domain/errors/service"
 )
-
-type logger interface {
-	Error(msg string, args ...any)
-	Info(msg string, args ...any)
-}
 
 type usecase interface {
 	Process(context.Context, *order.Event) (*order.ProcessedEvent, error)
 }
 
+type orderServiceGRPCGateway interface {
+	GetOrderStatusById(ctx context.Context, id string) (string, error)
+}
+
 type handler struct {
-	l  logger
+	l  logger.LoggerAdapter
+	og orderServiceGRPCGateway
 	uc usecase
 }
 
-func NewOrderChangedHandler(l logger, uc usecase) *handler {
-	return &handler{l: l, uc: uc}
+func NewOrderChangedHandler(l logger.LoggerAdapter, og orderServiceGRPCGateway, uc usecase) *handler {
+	return &handler{l: l, og: og, uc: uc}
 }
 
 func (h *handler) Setup(session sarama.ConsumerGroupSession) error {
@@ -56,7 +57,16 @@ func (h *handler) ConsumeClaim(sess sarama.ConsumerGroupSession, claim sarama.Co
 			continue
 		}
 
-		//TODO: add gRPC to check if order status is still actual
+		// check if order status is still actual
+		actualStatus, err := h.og.GetOrderStatusById(ctx, event.OrderID)
+		if err != nil || actualStatus != event.Status {
+			h.l.Info("order.changed handler: order's status changed",
+				"id", event.OrderID,
+				"prev_status", event.Status,
+				"actual_status", actualStatus,
+			)
+			continue
+		}
 
 		res, err := h.uc.Process(ctx, &event)
 		if err != nil {

@@ -3,14 +3,19 @@ package main
 import (
 	"context"
 	"errors"
-	"log/slog"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
+	"service-order-avito/api/order"
 	client2 "service-order-avito/infrastructure/kafka/client"
+	"service-order-avito/internal/adapters/logger"
+	"service-order-avito/internal/adapters/logger/sl"
 	"service-order-avito/internal/config"
+	order2 "service-order-avito/internal/gateway/order"
 	"service-order-avito/internal/handler/http/server"
 	courier2 "service-order-avito/internal/handler/http/server/handler/courier"
 	delivery2 "service-order-avito/internal/handler/http/server/handler/delivery"
@@ -22,7 +27,6 @@ import (
 	order3 "service-order-avito/internal/service/queues/order"
 	delivery_worker "service-order-avito/internal/worker/delivery"
 	"service-order-avito/internal/worker/queues/kafka"
-	"service-order-avito/pkg/logger"
 	"syscall"
 )
 
@@ -31,7 +35,7 @@ func main() {
 	cfg := config.MustLoad()
 
 	// LOGGER
-	log := logger.MustInit(cfg.Env)
+	log := sl.NewSlogLogger(cfg.Env)
 	log.Info("logger initialized")
 
 	// GS context
@@ -54,7 +58,13 @@ func main() {
 	}()
 
 	// Kafka connection
-	kafkaClient, err := client2.NewOrderKafkaClient(cfg.Kafka.ClientDSN)
+	kafkaClient, err := client2.NewOrderKafkaClient(
+		cfg.Kafka.ClientDSN,
+		cfg.Kafka.GroupId,
+		cfg.Kafka.OffsetInitial,
+		cfg.Kafka.OffsetAutocommit,
+		cfg.Kafka.OffsetAutocommitInterval,
+	)
 	if err != nil {
 		log.Error("init kafka order-change consumer")
 		os.Exit(1)
@@ -78,14 +88,14 @@ func main() {
 	go deliveryMonitorWorker.Start(ctxApp)
 	log.Info("delivery monitor worker is started")
 
-	//dz 7 depreciated
-	//connRPC, err := grpc.NewClient(cfg.GRPC.OrderServiceDSN, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	//if err != nil {
-	//	log.Error("unable to connect to order-service")
-	//	os.Exit(1)
-	//}
-	//orderServiceClient := order.NewOrdersServiceClient(connRPC)
-	//orderGateway := order2.NewOrderGateway(orderServiceClient)
+	//order service gRPC
+	connRPC, err := grpc.NewClient(cfg.GRPC.OrderServiceDSN, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Error("unable to connect to order-service")
+		os.Exit(1)
+	}
+	orderServiceClient := order.NewOrdersServiceClient(connRPC)
+	orderGateway := order2.NewOrderGateway(orderServiceClient)
 	//
 	//orderServiceMonitorWorker := order_worker.NewOrderMonitorWorker(
 	//	time.Second*5,
@@ -97,7 +107,7 @@ func main() {
 	//log.Info("order-service monitor worker is started")
 
 	// kafka order-changed consumer
-	handler := order4.NewOrderChangedHandler(log, orderChangedService)
+	handler := order4.NewOrderChangedHandler(log, orderGateway, orderChangedService)
 	orderConsumerWorker := kafka.NewOrderConsumerWorker(
 		log,
 		kafkaClient,
@@ -138,7 +148,7 @@ func main() {
 	gracefulShutdown(ctxApp, cfg.HTTP, log, srv, cancelDB)
 }
 
-func gracefulShutdown(ctxApp context.Context, cfg config.HTTPServer, log *slog.Logger, srv *http.Server, cancelDB context.CancelFunc) {
+func gracefulShutdown(ctxApp context.Context, cfg config.HTTPServer, log logger.LoggerAdapter, srv *http.Server, cancelDB context.CancelFunc) {
 	<-ctxApp.Done()
 	log.Info("shutdown signal received. starting graceful shutdown")
 

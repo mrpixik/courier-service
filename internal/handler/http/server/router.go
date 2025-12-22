@@ -3,8 +3,8 @@ package server
 import (
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"log/slog"
 	"net/http"
+	"service-order-avito/internal/adapters/logger"
 	"service-order-avito/internal/handler/http/middleware"
 	"service-order-avito/internal/handler/http/server/handler"
 )
@@ -22,7 +22,7 @@ type deliveryHandler interface {
 	PostUnassign(http.ResponseWriter, *http.Request)
 }
 
-func InitRouter(log *slog.Logger,
+func InitRouter(log logger.LoggerAdapter,
 	courierHandler courierHandler,
 	deliveryHandler deliveryHandler,
 	metricObserver middleware.MetricsObserverHTTP) chi.Router {
@@ -30,7 +30,8 @@ func InitRouter(log *slog.Logger,
 	router := chi.NewRouter()
 
 	router.Use(
-		middleware.WithMonitoring(log, metricObserver),
+		middleware.WithLogging(log),
+		middleware.WithMetrics(metricObserver),
 	)
 
 	router.Handle("/metrics", promhttp.Handler())

@@ -3,7 +3,7 @@ package delivery
 import (
 	"context"
 	"fmt"
-	"log/slog"
+	"service-order-avito/internal/adapters/logger"
 	"time"
 )
 
@@ -13,11 +13,11 @@ type deliveryService interface {
 
 type deliveryMonitorWorker struct {
 	interval   time.Duration
-	log        *slog.Logger // не стал реализовывать интерфейс логгера, так как не вижу смысла
+	log        logger.LoggerAdapter
 	delService deliveryService
 }
 
-func NewDeliveryMonitorWorker(interval time.Duration, log *slog.Logger, delService deliveryService) *deliveryMonitorWorker {
+func NewDeliveryMonitorWorker(interval time.Duration, log logger.LoggerAdapter, delService deliveryService) *deliveryMonitorWorker {
 	return &deliveryMonitorWorker{interval: interval, log: log, delService: delService}
 }
 

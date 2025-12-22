@@ -3,21 +3,17 @@ package kafka
 import (
 	"context"
 	"github.com/IBM/sarama"
+	"service-order-avito/internal/adapters/logger"
 )
 
-type logger interface {
-	Error(msg string, args ...any)
-	Info(msg string, args ...any)
-}
-
 type orderConsumerWorker struct {
-	l       logger
+	l       logger.LoggerAdapter
 	client  sarama.ConsumerGroup
 	handler sarama.ConsumerGroupHandler
 	topic   string
 }
 
-func NewOrderConsumerWorker(l logger, client sarama.ConsumerGroup, handler sarama.ConsumerGroupHandler, topic string) *orderConsumerWorker {
+func NewOrderConsumerWorker(l logger.LoggerAdapter, client sarama.ConsumerGroup, handler sarama.ConsumerGroupHandler, topic string) *orderConsumerWorker {
 	return &orderConsumerWorker{
 		l:       l,
 		client:  client,

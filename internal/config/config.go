@@ -17,7 +17,7 @@ type Config struct {
 	HTTP                       HTTPServer      `envPrefix:"HTTP_"`
 	DeliveryWorkerTickInterval time.Duration   `env:"DELIVERY_WORKER_TICK_INTERVAL" envDefault:"60s"`
 	GRPC                       GRPC            `envPrefix:"GRPC_"`
-	Kafka
+	Kafka                      Kafka           `envPrefix:"KAFKA_"`
 }
 
 type GRPC struct {
@@ -26,8 +26,12 @@ type GRPC struct {
 
 // Пока будем исходить из логики, что мы слушаем только 1 топик
 type Kafka struct {
-	ClientDSN string `env:"KAFKA_CLIENT_DSN,required"`
-	TopicName string `env:"KAFKA_TOPIC_NAME,required"`
+	ClientDSN                string        `env:"CLIENT_DSN,required"`
+	TopicName                string        `env:"TOPIC_NAME,required"`
+	GroupId                  string        `env:"GROUP_ID,required"`
+	OffsetInitial            string        `env:"OFFSET_INITIAL,required"`
+	OffsetAutocommit         bool          `env:"OFFSET_AUTOCOMMIT" envDefault:"false"`
+	OffsetAutocommitInterval time.Duration `env:"KAFKA_OFFSET_AUTOCOMMIT_INTERVAL" envDefault:"1s"`
 }
 
 type HTTPServer struct {
