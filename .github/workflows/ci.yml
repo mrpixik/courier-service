@@ -22,12 +22,12 @@ jobs:
           go-version: 1.21
 
       - name: Install golangci-lint
-        continue-on-error: true
         run: |
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
           | sh -s -- -b $(go env GOPATH)/bin v2.8.0
 
       - name: Run golangci-lint
+        continue-on-error: true
         run: golangci-lint run ./...
 
       - name: Run unit tests with coverage
