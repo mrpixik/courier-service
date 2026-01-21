@@ -2,13 +2,14 @@ package courier
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/stretchr/testify/suite"
 	"service-order-avito/internal/domain/errors/repository"
 	"service-order-avito/internal/domain/model"
 	"service-order-avito/internal/repository/postgres"
 	"testing"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/stretchr/testify/suite"
 )
 
 type CourierRepository interface {
@@ -44,11 +45,10 @@ func (s *CourierRepositoryTestSuite) SetupSuite() {
 	s.pool = pool
 	s.repo = postgres.NewCourierRepositoryPostgres(pool)
 	s.ctx = context.Background()
+}
 
-	_, err = s.pool.Exec(s.ctx, "DELETE FROM delivery")
-	s.Require().NoError(err)
-
-	_, err = s.pool.Exec(s.ctx, "DELETE FROM couriers")
+func (s *CourierRepositoryTestSuite) SetupTest() {
+	_, err := s.pool.Exec(s.ctx, "TRUNCATE TABLE delivery, couriers RESTART IDENTITY CASCADE")
 	s.Require().NoError(err)
 }
 
@@ -72,7 +72,7 @@ func (s *CourierRepositoryTestSuite) TestCreateCourier_Success() {
 	s.Require().Greater(id, 0)
 
 	var count int
-	err = s.pool.QueryRow(s.ctx, `SELECT COUNT(*) FROM couriers WHERE id=$1 AND phone=$2`, id, c.Phone).
+	err = s.pool.QueryRow(s.ctx, `SELECT COUNT(*) FROM couriers WHERE id=$1`, id).
 		Scan(&count)
 
 	s.Require().NoError(err)

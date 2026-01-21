@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: test123
       POSTGRES_DB: courier-test-db
     healthcheck:
-      test: [ "CMD-SHELL", "sh -c 'pg_isready -U tester -d test123'" ]
+      test: [ "CMD-SHELL", "pg_isready -U tester -d courier-test-db" ]
       interval: 10s
       timeout: 1s
       retries: 5

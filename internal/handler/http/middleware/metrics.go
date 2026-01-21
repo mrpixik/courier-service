@@ -1,15 +1,17 @@
 package middleware
 
 import (
-	"github.com/go-chi/chi/v5/middleware"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 type MetricsObserverHTTP interface {
 	IncTotalRequests()
 	NewRequest(method, path, status string, durationSec float64)
+	IncTotalRateLimitExceedances()
 }
 
 func WithMetrics(obs MetricsObserverHTTP) func(next http.Handler) http.Handler {
@@ -23,6 +25,10 @@ func WithMetrics(obs MetricsObserverHTTP) func(next http.Handler) http.Handler {
 
 			start := time.Now()
 			defer func() {
+
+				if ww.Status() == http.StatusTooManyRequests {
+					obs.IncTotalRateLimitExceedances()
+				}
 
 				obs.NewRequest(r.Method, r.URL.Path, strconv.Itoa(ww.Status()), time.Since(start).Seconds())
 

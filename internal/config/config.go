@@ -2,12 +2,13 @@ package config
 
 import (
 	"fmt"
-	"github.com/caarlos0/env/v11"
-	"github.com/joho/godotenv"
-	"github.com/spf13/pflag"
 	"log"
 	"os"
 	"time"
+
+	"github.com/caarlos0/env/v11"
+	"github.com/joho/godotenv"
+	"github.com/spf13/pflag"
 )
 
 type Config struct {
@@ -40,6 +41,12 @@ type HTTPServer struct {
 	ReadTimeout     time.Duration `env:"READ_TIMEOUT" envDefault:"10s"`
 	WriteTimeout    time.Duration `env:"WRITE_TIMEOUT" envDefault:"15s"`
 	IdleTimeout     time.Duration `env:"IDLE_TIMEOUT" envDefault:"60s"`
+	RateLimiter     RateLimiter   `envPrefix:"RATE_LIMITER_"`
+}
+
+type RateLimiter struct {
+	MaxRPC    int `env:"MAX_RPC" envDefault:"5"`
+	RPCRefill int `env:"RPC_REFILL" envDefault:"5"`
 }
 
 type PostgresStorage struct {

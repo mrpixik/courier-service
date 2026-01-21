@@ -27,10 +27,10 @@ run_tests:
 	go test ./internal/service/delivery
 
 run_tests_with_coverage:
-	go test -cover ./internal/http/server/handlers/courier
-	go test -cover ./internal/http/server/handlers/delivery
-	go test -cover ./internal/service/courier
-	go test -cover ./internal/service/delivery
+	go test -cover ./internal/handler/http/server/handler/courier \
+	./internal/handler/http/server/handler/delivery \
+	./internal/service/courier \
+	./internal/service/delivery
 
 run_test_integration:
 	docker-compose -f docker-compose.tests.yaml up -d

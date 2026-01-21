@@ -3,13 +3,13 @@ package postgres
 import (
 	"context"
 	"errors"
-	"fmt"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"service-order-avito/internal/domain/errors/repository"
 	"service-order-avito/internal/domain/model"
 	"time"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type deliveryRepositoryPostgres struct {
@@ -37,7 +37,6 @@ func (d *deliveryRepositoryPostgres) Create(ctx context.Context, delivery model.
 	}
 
 	if err != nil {
-		fmt.Println(err)
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			switch pgErr.Code {

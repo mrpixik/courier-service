@@ -2,13 +2,14 @@ package delivery
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/stretchr/testify/suite"
 	"service-order-avito/internal/domain/errors/repository"
 	"service-order-avito/internal/domain/model"
 	"service-order-avito/internal/repository/postgres"
 	"testing"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/stretchr/testify/suite"
 )
 
 type DeliveryRepository interface {
@@ -41,11 +42,10 @@ func (s *DeliveryRepositoryTestSuite) SetupSuite() {
 	s.pool = pool
 	s.repo = postgres.NewDeliveryRepositoryPostgres(pool)
 	s.ctx = context.Background()
+}
 
-	_, err = s.pool.Exec(s.ctx, "DELETE FROM delivery")
-	s.Require().NoError(err)
-
-	_, err = s.pool.Exec(s.ctx, "DELETE FROM couriers")
+func (s *DeliveryRepositoryTestSuite) SetupTest() {
+	_, err := s.pool.Exec(s.ctx, "TRUNCATE TABLE delivery, couriers RESTART IDENTITY CASCADE")
 	s.Require().NoError(err)
 }
 
@@ -124,6 +124,13 @@ func (s *DeliveryRepositoryTestSuite) TestCreate_InvalidCourierId() {
 }
 
 func (s *DeliveryRepositoryTestSuite) TestGetByOrderId_Success() {
+	// создаём курьера
+	_, err := s.pool.Exec(s.ctx, `
+        INSERT INTO couriers (id, name, phone, status, transport_type, total_deliveries, created_at)
+        VALUES (1, 'Mike', '555', 'available', 'bike', 0, NOW())
+    `)
+	s.Require().NoError(err)
+
 	assigned := time.Now().Add(-10 * time.Minute)
 	deadline := time.Now().Add(10 * time.Minute)
 
@@ -142,6 +149,13 @@ func (s *DeliveryRepositoryTestSuite) TestGetByOrderId_NotFound() {
 }
 
 func (s *DeliveryRepositoryTestSuite) TestGetAllCompleted_ReturnsPastDeadlines() {
+	// создаём курьера
+	_, err := s.pool.Exec(s.ctx, `
+        INSERT INTO couriers (id, name, phone, status, transport_type, total_deliveries, created_at)
+        VALUES (1, 'Mike', '555', 'available', 'bike', 0, NOW())
+    `)
+	s.Require().NoError(err)
+
 	s.insertDelivery(1, "O1", time.Now().Add(-1*time.Hour), time.Now().Add(-30*time.Minute))
 	s.insertDelivery(1, "O2", time.Now().Add(-2*time.Hour), time.Now().Add(-10*time.Minute))
 
@@ -158,9 +172,25 @@ func (s *DeliveryRepositoryTestSuite) TestGetAllCompleted_ReturnsPastDeadlines()
 }
 
 func (s *DeliveryRepositoryTestSuite) TestDeleteByOrderId_Success() {
-	s.insertDelivery(1, "DEL-99", time.Now(), time.Now())
+	// создаём курьера
+	_, err := s.pool.Exec(s.ctx, `
+        INSERT INTO couriers (id, name, phone, status, transport_type, total_deliveries, created_at)
+        VALUES (1, 'Mike', '555', 'available', 'bike', 0, NOW())
+    `)
+	s.Require().NoError(err)
 
-	err := s.repo.DeleteByOrderId(s.ctx, "DEL-99")
+	delivery := model.Delivery{
+		CourierId:  1,
+		OrderId:    "DEL-99",
+		AssignedAt: time.Now(),
+		Deadline:   time.Now().Add(2 * time.Hour),
+	}
+
+	_, err = s.repo.Create(s.ctx, delivery)
+
+	s.Require().NoError(err)
+
+	err = s.repo.DeleteByOrderId(s.ctx, "DEL-99")
 	s.Require().NoError(err)
 
 	_, err = s.repo.GetByOrderId(s.ctx, "DEL-99")
@@ -173,10 +203,17 @@ func (s *DeliveryRepositoryTestSuite) TestDeleteByOrderId_NotFound() {
 }
 
 func (s *DeliveryRepositoryTestSuite) TestDeleteManyById_Success() {
+	// создаём курьера
+	_, err := s.pool.Exec(s.ctx, `
+        INSERT INTO couriers (id, name, phone, status, transport_type, total_deliveries, created_at)
+        VALUES (1, 'Mike', '555', 'available', 'bike', 0, NOW())
+    `)
+	s.Require().NoError(err)
+
 	id1 := s.insertDelivery(1, "B1", time.Now(), time.Now())
 	id2 := s.insertDelivery(1, "B2", time.Now(), time.Now())
 
-	err := s.repo.DeleteManyById(s.ctx, id1, id2)
+	err = s.repo.DeleteManyById(s.ctx, id1, id2)
 	s.Require().NoError(err)
 
 	_, err = s.repo.GetByOrderId(s.ctx, "B1")

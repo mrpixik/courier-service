@@ -6,8 +6,10 @@ import (
 )
 
 type prometheusHTTPObserver struct {
-	totalRequest prometheus.Counter
-	reqDuration  *prometheus.HistogramVec
+	totalRequest              prometheus.Counter
+	reqDuration               *prometheus.HistogramVec
+	totalRateLimitExceedances prometheus.Counter
+	totalGatewayRetries       prometheus.Counter
 }
 
 func NewPrometheusHTTPObserver() *prometheusHTTPObserver {
@@ -26,7 +28,22 @@ func NewPrometheusHTTPObserver() *prometheusHTTPObserver {
 		[]string{"method", "path", "status"},
 	)
 
-	return &prometheusHTTPObserver{totalRequest: totalRequest, reqDuration: reqDuration}
+	rateLimitExceededTotal := promauto.NewCounter(prometheus.CounterOpts{
+		Name: "rate_limit_exceeded_total",
+		Help: "total limit exceedances",
+	})
+
+	gatewayRetriesTotal := promauto.NewCounter(prometheus.CounterOpts{
+		Name: "gateway_retries_total",
+		Help: "total retries to gateway",
+	})
+
+	return &prometheusHTTPObserver{
+		totalRequest:              totalRequest,
+		reqDuration:               reqDuration,
+		totalRateLimitExceedances: rateLimitExceededTotal,
+		totalGatewayRetries:       gatewayRetriesTotal,
+	}
 
 }
 
@@ -36,4 +53,12 @@ func (p *prometheusHTTPObserver) IncTotalRequests() {
 
 func (p *prometheusHTTPObserver) NewRequest(method, path, status string, durationSec float64) {
 	p.reqDuration.WithLabelValues(method, path, status).Observe(durationSec)
+}
+
+func (p *prometheusHTTPObserver) IncTotalRateLimitExceedances() {
+	p.totalRateLimitExceedances.Inc()
+}
+
+func (p *prometheusHTTPObserver) IncTotalGatewayRetries() {
+	p.totalGatewayRetries.Inc()
 }

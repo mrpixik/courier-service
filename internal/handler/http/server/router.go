@@ -1,12 +1,14 @@
 package server
 
 import (
-	"github.com/go-chi/chi/v5"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 	"service-order-avito/internal/adapters/logger"
 	"service-order-avito/internal/handler/http/middleware"
+	"service-order-avito/internal/handler/http/middleware/rate_limiter"
 	"service-order-avito/internal/handler/http/server/handler"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type courierHandler interface {
@@ -22,16 +24,22 @@ type deliveryHandler interface {
 	PostUnassign(http.ResponseWriter, *http.Request)
 }
 
+type rateLimiter interface {
+	Allow() bool
+}
+
 func InitRouter(log logger.LoggerAdapter,
 	courierHandler courierHandler,
 	deliveryHandler deliveryHandler,
-	metricObserver middleware.MetricsObserverHTTP) chi.Router {
+	metricObserver middleware.MetricsObserverHTTP,
+	rateLimiter rateLimiter) chi.Router {
 
 	router := chi.NewRouter()
 
 	router.Use(
 		middleware.WithLogging(log),
 		middleware.WithMetrics(metricObserver),
+		rate_limiter.WithRateLimiter(rateLimiter, log),
 	)
 
 	router.Handle("/metrics", promhttp.Handler())

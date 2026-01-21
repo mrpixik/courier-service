@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
@@ -16,6 +14,7 @@ import (
 	"service-order-avito/internal/adapters/logger/sl"
 	"service-order-avito/internal/config"
 	order2 "service-order-avito/internal/gateway/order"
+	"service-order-avito/internal/handler/http/middleware/rate_limiter"
 	"service-order-avito/internal/handler/http/server"
 	courier2 "service-order-avito/internal/handler/http/server/handler/courier"
 	delivery2 "service-order-avito/internal/handler/http/server/handler/delivery"
@@ -28,6 +27,9 @@ import (
 	delivery_worker "service-order-avito/internal/worker/delivery"
 	"service-order-avito/internal/worker/queues/kafka"
 	"syscall"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
@@ -106,8 +108,11 @@ func main() {
 	//go orderServiceMonitorWorker.Start(ctxApp)
 	//log.Info("order-service monitor worker is started")
 
+	// Prometheus
+	prometheusHTTPObserver := prometheus.NewPrometheusHTTPObserver()
+
 	// kafka order-changed consumer
-	handler := order4.NewOrderChangedHandler(log, orderGateway, orderChangedService)
+	handler := order4.NewOrderChangedHandler(log, orderGateway, orderChangedService, prometheusHTTPObserver)
 	orderConsumerWorker := kafka.NewOrderConsumerWorker(
 		log,
 		kafkaClient,
@@ -122,11 +127,11 @@ func main() {
 	deliveryHandler := delivery2.NewDeliveryHandler(deliveryService)
 	log.Info("controller lay is initialized")
 
-	// Prometheus
-	prometheusHTTPObserver := prometheus.NewPrometheusHTTPObserver()
+	// Rate limiter
+	tokenBacketLimiter := rate_limiter.NewTokenBucket(cfg.HTTP.RateLimiter.MaxRPC, cfg.HTTP.RateLimiter.RPCRefill)
 
 	// ROUTER & SERVER
-	r := server.InitRouter(log, courierHandler, deliveryHandler, prometheusHTTPObserver)
+	r := server.InitRouter(log, courierHandler, deliveryHandler, prometheusHTTPObserver, tokenBacketLimiter)
 
 	srv := &http.Server{
 		Addr:    ":" + cfg.HTTP.Port,
