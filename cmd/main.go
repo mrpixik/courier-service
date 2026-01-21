@@ -127,6 +127,13 @@ func main() {
 	deliveryHandler := delivery2.NewDeliveryHandler(deliveryService)
 	log.Info("controller lay is initialized")
 
+	// pprof server
+	go func() {
+		if err := http.ListenAndServe("127.0.0.1:6060", nil); err != nil {
+			log.Error("pprof server error: %v", err)
+		}
+	}()
+
 	// Rate limiter
 	tokenBacketLimiter := rate_limiter.NewTokenBucket(cfg.HTTP.RateLimiter.MaxRPC, cfg.HTTP.RateLimiter.RPCRefill)
 
